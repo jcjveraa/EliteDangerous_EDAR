@@ -1,4 +1,4 @@
 /mariadb-config*
 /sqlite-binary/sqlite3*
 *node_modules*
-.vscode
+/.vscode
