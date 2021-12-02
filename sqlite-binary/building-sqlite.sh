@@ -9,4 +9,4 @@ cd sqlite-autoconf-3370000
 gcc shell.c sqlite3.c -DSQLITE_ENABLE_RTREE -lpthread -ldl -lm -o sqlite3
 mv sqlite3 ../sqlite3
 cd ..
-rm -r sqlite-autoconf-3370000
+rm -r sqlite-autoconf-3370000 
