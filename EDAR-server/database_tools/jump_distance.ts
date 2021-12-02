@@ -8,7 +8,7 @@ export function getSytemsInReach(system: string, maxJumpRangeLY: number): void;
 export function getSytemsInReach(system_id: number, maxJumpRangeLY: number): void;
 export function getSytemsInReach(sys: number | string, maxJumpRangeLY: number): void{
 
-  let res: {id: number, DISTANCE_SQUARED: number}[] = [];
+  let res: {id: number, distance_squared: number}[] = [];
 
   if(typeof sys === 'number') {
     const stmt = db.prepare<[system_id: number, distanceSquared: number]>(query_by_id);
@@ -21,6 +21,6 @@ export function getSytemsInReach(sys: number | string, maxJumpRangeLY: number): 
   }
 
   res.forEach((s) => {
-    console.log(s, s.id, Math.sqrt(s.DISTANCE_SQUARED));
+    console.log(s, s.id, Math.sqrt(s.distance_squared));
   });
 }

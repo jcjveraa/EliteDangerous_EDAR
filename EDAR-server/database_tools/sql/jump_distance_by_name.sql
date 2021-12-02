@@ -1,6 +1,6 @@
-WITH const AS (select X AS XREF, Y AS YREF, Z AS ZREF, name as nameREF from systems_populated_v6 where systems_populated_v6.id =
-(SELECT systems_populated_v6.id from systems_populated_v6 where systems_populated_v6.name = ?)
-)
-select id, (X-const.XREF)*(X-const.XREF) + (Y-const.YREF)*(Y-const.YREF) + (Z-const.ZREF)*(Z-const.ZREF) AS DISTANCE_SQUARED from systems_populated_v6, const
-where DISTANCE_SQUARED <= ?
-order by DISTANCE_SQUARED asc;
+SELECT sp1.id, sp1.edsm_id, sp1.name, 
+(sp1.X-sp2.X)*(sp1.X-sp2.X) + (sp1.Y-sp2.Y)*(sp1.Y-sp2.Y) + (sp1.Z-sp2.Z)*(sp1.Z-sp2.Z) AS distance_squared 
+FROM systems_populated_v6 as sp1
+LEFT JOIN systems_populated_v6 as sp2
+WHERE sp2.name = ? AND distance_squared <= ?
+ORDER BY distance_squared ASC;
