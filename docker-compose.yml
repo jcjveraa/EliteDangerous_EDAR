@@ -1,0 +1,14 @@
+---
+version: "2.1"
+services:
+  mariadb:
+    image: lscr.io/linuxserver/mariadb
+    container_name: mariadb
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ./mariadb-config/:/config
+    ports:
+      - 3306:3306
+    restart: unless-stopped
