@@ -6,10 +6,13 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "build": "tsc --project ./",
+        "build-and-run-wo-ts-node": "tsc --project ./ && node .",
         "start-test": "nodemon index.ts",
         "start-test-docker": "nodemon --legacy-watch index.ts",
         "start-sandbox": "nodemon sandbox.ts",
-        "start": "ts-node index.ts"
+        "start-dev": "ts-node index.ts",
+        "start-prod": "ts-node-transpile-only index.ts",
+        "start": "ts-node-transpile-only index.ts"
     },
     "keywords": [],
     "author": "",
