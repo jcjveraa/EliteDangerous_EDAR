@@ -1,71 +1,138 @@
 import {db} from '..';
 import fs from 'node:fs'
 import {ITradeFinderResult} from '../models/ITradeFinderResult';
+import {FindTradeOptions} from './FindTradeOptions';
 
 // const regex = new RegExp('/[\n\t]+/gm');
 const query = fs.readFileSync(__dirname + '/sql/trade_finder.sql', 'utf8').replace(/[\n\t]+/gm, ' ');
-enum MIN_PAD_SIZE {S, M, L}
+const query_return = fs.readFileSync(__dirname + '/sql/trade_finder_return.sql', 'utf8').replace(/[\n\t]+/gm, ' ');
 
-export function findTrades(system: string, maxJumpRangeLY: number, target_system?: string, maxAgeDays?: number, minPadSize?: MIN_PAD_SIZE): void;
-export function findTrades(system_id: number, maxJumpRangeLY: number, target_system?: number, maxAgeDays?: number, minPadSize?: MIN_PAD_SIZE): void;
-export function findTrades(sys: number | string, maxJumpRangeLY: number, target_system?: string | number, maxAgeDays = 3, minPadSize = MIN_PAD_SIZE.S): void{
+export enum MIN_PAD_SIZE {S, M, L}
 
-  let system_id = -1;
-  let target_system_id = -1;
+export function findTrades(opts: FindTradeOptions, returnTrade = false): ITradeFinderResult | undefined{
+
   let res: ITradeFinderResult[] = [];
-  let current_query = query;
-  const select_system_id_by_name_query = 'select systems_populated_v6.id from systems_populated_v6 where name = ?;';
 
-  if(typeof sys === 'string') {
-    const stmt = db.prepare<[system: string]>(select_system_id_by_name_query);
-    system_id = stmt.get(sys).id;
-  }
-
-  // if we have a target system set
-  if(target_system){
-    if(typeof target_system === 'string') {
-      const stmt = db.prepare<[system: string]>(select_system_id_by_name_query);
-      target_system_id = stmt.get(target_system).id;
-    } else {
-      target_system_id = target_system;
-    }
-    current_query = current_query.replace('@@@TARGET_SYSTEM@@@', ` AND sp1.id = ${target_system_id} `)
-
+  if(!returnTrade) {
+    res = findFirstTrade(opts);
   } else {
-    // do nothing
-    current_query = current_query.replace('@@@TARGET_SYSTEM@@@', ` `)
+    res = findReturnTrade(opts);
   }
 
-  if(typeof sys === 'number') {
-    system_id = sys;
-  }
+  let bestResult: ITradeFinderResult | undefined = undefined;
+  // let bestResultTwoWay: ITradeFinderResult | undefined = undefined;
+  const fullResults: ITradeFinderResult[] = [];
+
+  res.forEach((s) => {
+    const maxUnitsPriceLimit = Math.floor(opts.fundsAvailable / s.buy_price);
+    const maxUnitsCargospaceLimit = opts.cargoSpaceAvailable;
+    const units = Math.min(maxUnitsCargospaceLimit, maxUnitsPriceLimit);
+    const totalProfit = s.profit_per_unit * units;
+    s.jump_distance_LY = Math.sqrt(s.jump_distance_LY_Squared);
+
+    s.maxAttainableOneWay = {units: units, totalProfit: totalProfit};
+
+    if(!returnTrade && opts.two_way) {
+      const returnOpts: FindTradeOptions = new FindTradeOptions(s.sell_system_id, opts.maxJumpRangeLY, opts.fundsAvailable + totalProfit, opts.cargoSpaceAvailable);
+      // Flip around sell & buy as this is the return leg
+      returnOpts.currentStation = s.sell_station_id;
+      returnOpts.targetStation = s.buy_station_id;
+      s.returnTrade = findTrades(returnOpts, true);
+      // let twoWayProfit = 0;
+      if(s.returnTrade?.maxAttainableOneWay) {
+        s.maxAttainableTwoWayProfit = s.maxAttainableOneWay.totalProfit + s.returnTrade?.maxAttainableOneWay?.totalProfit;
+      }
+      if(s.maxAttainableTwoWayProfit && bestResult?.maxAttainableTwoWayProfit && bestResult?.maxAttainableTwoWayProfit < s.maxAttainableTwoWayProfit) {
+        bestResult = s;
+      }
+
+      if(!bestResult) {
+        bestResult = s;
+      } else if(bestResult.maxAttainableOneWay?.totalProfit && s.maxAttainableOneWay.totalProfit > bestResult.maxAttainableOneWay?.totalProfit) {
+        bestResult = s;
+      }
+    } else {
+    // console.log(s);
+      if(!bestResult) {
+        bestResult = s;
+      } else if(bestResult.maxAttainableOneWay?.totalProfit && s.maxAttainableOneWay.totalProfit > bestResult.maxAttainableOneWay?.totalProfit) {
+        bestResult = s;
+      }
+    }
+
+    fullResults.push(s);
+  });
+
+  // if(!returnTrade && opts.two_way) {
+  //   fullResults.sort((a, b) => {
+  //     if(a.maxAttainableTwoWayProfit && b.maxAttainableTwoWayProfit) {
+  //       return a.maxAttainableTwoWayProfit - b.maxAttainableTwoWayProfit
+  //     } else {
+  //       return (a.commodity_id - b.commodity_id); ///
+  //     }
+  //   })
+  //   console.log(fullResults);
+  // }
+
+  return bestResult;
+}
+
+function findFirstTrade(opts: FindTradeOptions) {
+  const system_id = opts.currentSystemId;
+  const target_system_id = opts.targetSytem;
+  let current_query = query;
+  // TARGET SYSTEM replacer
+  // if we have a target system set
+  current_query = targetSystemReplacer(target_system_id, current_query);
 
   const currentEpoch = Math.floor(new Date().getTime() / 1000); // seconds
-  const maxAge = currentEpoch - maxAgeDays * 24 * 3600;
+  const maxAge = currentEpoch - opts.maxAgeDays * 24 * 3600;
+  const params = {system_id: system_id, max_range: Math.pow(opts.maxJumpRangeLY, 2), max_age: maxAge};
+  current_query = padSizeReplacer(opts.minPadSize, current_query);
+  const stmt = db.prepare(current_query);
+  const res: ITradeFinderResult[] = stmt.all(params);
+  return res;
+}
 
-  const params = {system_id: system_id, max_range: maxJumpRangeLY * maxJumpRangeLY, max_age: maxAge};
+export function findReturnTrade(opts: FindTradeOptions){
+  let res: ITradeFinderResult[] = [];
+  if(opts.currentStation && opts.targetStation) {
+    const params = {original_station: opts.currentStation, target_station: opts.targetStation};
+    const stmt = db.prepare(query_return);
+    res = stmt.all(params);
+    return res;
+  } else {
+    throw new Error(`Missing currentstation and/or tragetstation in ${opts}`);
+
+  }
 
 
+}
+
+function padSizeReplacer(minPadSize: MIN_PAD_SIZE, current_query: string) {
   switch (minPadSize) {
   case MIN_PAD_SIZE.S:
-    current_query = current_query.replace(/@pad_sizes/gm, '\'L\', \'M\', \'S\'')
+    current_query = current_query.replace(/@pad_sizes/gm, '\'L\', \'M\', \'S\'');
     break;
   case MIN_PAD_SIZE.M:
-    current_query = current_query.replace(/@pad_sizes/gm, '\'L\', \'M\'')
+    current_query = current_query.replace(/@pad_sizes/gm, '\'L\', \'M\'');
     break;
   case MIN_PAD_SIZE.L:
-    current_query = current_query.replace(/@pad_sizes/gm, '\'L\'')
+    current_query = current_query.replace(/@pad_sizes/gm, '\'L\'');
     break;
 
   default:
     break;
   }
-  // console.info(current_query);
-  const stmt = db.prepare(current_query);
-  res = stmt.all(params);
+  return current_query;
+}
 
-
-  res.forEach((s) => {
-    console.log(s);
-  });
+function targetSystemReplacer(target_system_id: number| undefined, current_query: string) {
+  if (target_system_id) {
+    current_query = current_query.replace('@@@TARGET_SYSTEM@@@', ` AND sp1.id = ${target_system_id} `);
+  } else {
+    // do nothing
+    current_query = current_query.replace('@@@TARGET_SYSTEM@@@', ` `);
+  }
+  return current_query;
 }

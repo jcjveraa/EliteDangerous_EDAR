@@ -15,23 +15,8 @@ from listings_v6 as table1
 INNER join
 
 		(select *, max(sell_price) from listings_v6 where
-		listings_v6.station_id in
-			(select stations_v6.id as station_id
-			from
-			(SELECT sp1.id, sp1.edsm_id, sp1.name,
-			(sp1.X-sp2.X)*(sp1.X-sp2.X) + (sp1.Y-sp2.Y)*(sp1.Y-sp2.Y) + (sp1.Z-sp2.Z)*(sp1.Z-sp2.Z) AS distance_squared 
-			FROM systems_populated_v6 AS sp1
-			LEFT JOIN systems_populated_v6 AS sp2
-			WHERE sp2.id = @system_id
-      @@@TARGET_SYSTEM@@@
-      AND distance_squared <= @max_range
-
-			) as systems_in_range
-			LEFT JOIN stations_v6 ON systems_in_range.id = stations_v6.system_id
-      WHERE stations_v6.max_landing_pad_size in (@pad_sizes)
-      )
+		listings_v6.station_id = @target_station
 		and demand > 0
-		and collected_at > @max_age
 		group by listings_v6.commodity_id) as table2
 
 on table1.commodity_id = table2.commodity_id
@@ -42,11 +27,7 @@ LEFT JOIN systems_populated_v6 as buy_system_full on buy_system_full.id = buy_sy
 LEFT JOIN systems_populated_v6 as sell_system_full on sell_system_full.id = sell_system_id
 
 
-where table1.station_id in
-
-	(select stations_v6.id as station_id from stations_v6 
-	where 	stations_v6.system_id = @system_id
-	and 	stations_v6.max_landing_pad_size in (@pad_sizes))	
+where table1.station_id = @original_station
 
 and table1.supply != 0 
 and table1.buy_price != 0
