@@ -23,6 +23,10 @@ export class FindTradeOptions {
   currentSystemId: number;
   maxJumpRangeLY: number;
 
+  public getMaxAgeSeconds() {
+    const currentEpoch = Math.floor(new Date().getTime() / 1000); // seconds
+    return currentEpoch - this.maxAgeDays * 24 * 3600;
+  }
 
   /**
    *

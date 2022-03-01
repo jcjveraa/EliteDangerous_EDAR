@@ -78,20 +78,17 @@ export function findTrades(opts: FindTradeOptions, returnTrade = false): ITradeF
 }
 
 function findFirstTrade(opts: FindTradeOptions) {
-  const system_id = opts.currentSystemId;
-  const target_system_id = opts.targetSytem;
   let current_query = query;
   // TARGET SYSTEM replacer
   // if we have a target system set
-  current_query = targetSystemReplacer(target_system_id, current_query);
+  current_query = targetSystemReplacer(opts.targetSytem, current_query);
 
-  const currentEpoch = Math.floor(new Date().getTime() / 1000); // seconds
-  const maxAge = currentEpoch - opts.maxAgeDays * 24 * 3600;
-  const params = {system_id: system_id, max_range: Math.pow(opts.maxJumpRangeLY, 2), max_age: maxAge};
+  const params = {system_id: opts.currentSystemId, max_range: Math.pow(opts.maxJumpRangeLY, 2), max_age:  opts.getMaxAgeSeconds()};
   current_query = padSizeReplacer(opts.minPadSize, current_query);
   const stmt = db.prepare(current_query);
-  const res: ITradeFinderResult[] = stmt.all(params);
-  return res;
+
+  const result: ITradeFinderResult[] = stmt.all(params);
+  return result;
 }
 
 export function findReturnTrade(opts: FindTradeOptions){
@@ -102,7 +99,7 @@ export function findReturnTrade(opts: FindTradeOptions){
     res = stmt.all(params);
     return res;
   } else {
-    throw new Error(`Missing currentstation and/or tragetstation in ${opts}`);
+    throw new Error(`Missing currentstation and/or targetstation in ${opts}`);
 
   }
 
@@ -129,10 +126,7 @@ function padSizeReplacer(minPadSize: MIN_PAD_SIZE, current_query: string) {
 
 function targetSystemReplacer(target_system_id: number| undefined, current_query: string) {
   if (target_system_id) {
-    current_query = current_query.replace('@@@TARGET_SYSTEM@@@', ` AND sp1.id = ${target_system_id} `);
-  } else {
-    // do nothing
-    current_query = current_query.replace('@@@TARGET_SYSTEM@@@', ` `);
+    return current_query.replace('@@@TARGET_SYSTEM@@@', ` AND sp1.id = ${target_system_id} `);
   }
-  return current_query;
+  return current_query.replace('@@@TARGET_SYSTEM@@@', ` `);
 }

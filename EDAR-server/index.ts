@@ -1,5 +1,6 @@
 console.time('loaded up in');
 import Sqlite from 'better-sqlite3';
+import {refreshDatabase} from './database_tools/db_updaters';
 import {FindTradeOptions} from './database_tools/FindTradeOptions';
 import {findTrades, MIN_PAD_SIZE} from './database_tools/trade_finder';
 
@@ -7,7 +8,7 @@ import {findTrades, MIN_PAD_SIZE} from './database_tools/trade_finder';
 export const db: Sqlite.Database = Sqlite('EDAR.sqlite3');
 // db.pragma('journal_mode = WAL');
 
-// refreshDatabase(false);
+// refreshDatabase(true);
 console.timeEnd('loaded up in');
 console.time('Found a trade in');
 const tradeOpts = new FindTradeOptions('LHS 3447', 10, 100000, 16);
