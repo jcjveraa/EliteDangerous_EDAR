@@ -7,6 +7,7 @@
         "test": "echo \"Error: no test specified\" && exit 1",
         "build": "tsc --project ./",
         "build-and-run-wo-ts-node": "tsc --project ./ && node .",
+        "profile": "tsc --project ./ && node --prof .",
         "start-test": "nodemon index.ts",
         "start-test-docker": "nodemon --legacy-watch index.ts",
         "start-sandbox": "nodemon sandbox.ts",

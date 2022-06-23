@@ -2,3 +2,5 @@
 /sqlite-binary/sqlite3*
 *node_modules*
 /.vscode
+EDAR-server/processed.txt
+EDAR-server/p.txt

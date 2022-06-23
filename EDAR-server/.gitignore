@@ -2,3 +2,4 @@ EDAR.sqlite3*
 reference_files/*
 node_modules
 files/*
+dist
