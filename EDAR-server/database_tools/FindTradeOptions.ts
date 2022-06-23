@@ -28,7 +28,7 @@ export class FindTradeOptions {
     return currentEpoch - this.maxAgeDays * 24 * 3600;
   }
 
-  /**
+  /***
    *
    */
   constructor(currentSystem: number | string, maxJumpRangeLY: number, fundsAvailable: number, cargoSpaceAvailable: number) {

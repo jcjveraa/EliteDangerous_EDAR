@@ -2,9 +2,11 @@ import {db} from '..';
 import fs from 'node:fs'
 import {ITradeFinderResult} from '../models/ITradeFinderResult';
 import {FindTradeOptions} from './FindTradeOptions';
+import { v4 as uuidv4 } from 'uuid';
 
 // const regex = new RegExp('/[\n\t]+/gm');
 const query = fs.readFileSync(__dirname + '/sql/trade_finder.sql', 'utf8').replace(/[\n\t]+/gm, ' ');
+const query_temp_table = fs.readFileSync(__dirname + '/sql/temp_table_station_distances.sql', 'utf8').replace(/[\n\t]+/gm, ' ');
 const query_return = fs.readFileSync(__dirname + '/sql/trade_finder_return.sql', 'utf8').replace(/[\n\t]+/gm, ' ');
 
 export enum MIN_PAD_SIZE {S, M, L}
@@ -85,9 +87,25 @@ function findFirstTrade(opts: FindTradeOptions) {
 
   const params = {system_id: opts.currentSystemId, max_range: Math.pow(opts.maxJumpRangeLY, 2), max_age:  opts.getMaxAgeSeconds()};
   current_query = padSizeReplacer(opts.minPadSize, current_query);
+  
+
+  let unique_table_name = (Math.random().toString(36) + Math.random().toString(36)).replace(/[^a-z]+/g, '');
+  current_query = table_name_replacer(unique_table_name, current_query);
+
+  let temp_table_query = targetSystemReplacer(opts.targetSytem, query_temp_table);
+  temp_table_query = table_name_replacer(unique_table_name, temp_table_query);
+  temp_table_query = padSizeReplacer(opts.minPadSize, temp_table_query);
+
+  // console.info(temp_table_query);
+
+  const stmt_tmp = db.prepare(temp_table_query);
+  stmt_tmp.run(params);
+
   const stmt = db.prepare(current_query);
 
   const result: ITradeFinderResult[] = stmt.all(params);
+
+  db.exec('drop table if exists '+unique_table_name+';');
   return result;
 }
 
@@ -109,13 +127,13 @@ export function findReturnTrade(opts: FindTradeOptions){
 function padSizeReplacer(minPadSize: MIN_PAD_SIZE, current_query: string) {
   switch (minPadSize) {
   case MIN_PAD_SIZE.S:
-    current_query = current_query.replace(/@pad_sizes/gm, '\'L\', \'M\', \'S\'');
+    current_query = current_query.replace(/@pad_sizes/gm, '0');
     break;
   case MIN_PAD_SIZE.M:
-    current_query = current_query.replace(/@pad_sizes/gm, '\'L\', \'M\'');
+    current_query = current_query.replace(/@pad_sizes/gm, '1');
     break;
   case MIN_PAD_SIZE.L:
-    current_query = current_query.replace(/@pad_sizes/gm, '\'L\'');
+    current_query = current_query.replace(/@pad_sizes/gm, '2');
     break;
 
   default:
@@ -130,3 +148,10 @@ function targetSystemReplacer(target_system_id: number| undefined, current_query
   }
   return current_query.replace('@@@TARGET_SYSTEM@@@', ` `);
 }
+
+function table_name_replacer(uuid: string, current_query: string) {
+
+    return current_query.replace('@@@TEMP_TABLE_NAME@@@', uuid);
+
+}
+

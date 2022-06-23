@@ -7,11 +7,17 @@ import csv from 'csv-parser';
 import {IListing} from '../models/IListing';
 import {IStation} from '../models/IStation';
 import zlib from 'node:zlib'
+import {MIN_PAD_SIZE} from './trade_finder';
 
 const BASE_FILE_LOC = 'files/'
 const INSERT_BATCH_SIZE = 100000;
 
-export async function refreshDatabase(download = true) {
+const MLP_Mapping = new Map<string, number>();
+MLP_Mapping.set('S', MIN_PAD_SIZE.S);
+MLP_Mapping.set('M', MIN_PAD_SIZE.M);
+MLP_Mapping.set('L', MIN_PAD_SIZE.L);
+
+export async function refreshDatabase(download = false) {
   if(download){
     await downloadEDDB('systems_populated.jsonl').then(() => recreate_systems_populated_v6());
     await downloadEDDB('listings.csv').then(() => recreate_listings_v6());
@@ -72,7 +78,8 @@ async function recreate_stations_v6() {
 
   const insertMany = db.transaction((cats: {station: IStation, fulljson: string}[]) => {
     for (const item of cats) {
-      prep.run(item.station.id, item.station.system_id, item.station.max_landing_pad_size, item.station.distance_to_star, item.station.name, item.fulljson);
+      const numeric_max_landing_pad_size = MLP_Mapping.get(item.station.max_landing_pad_size);
+      prep.run(item.station.id, item.station.system_id, numeric_max_landing_pad_size, item.station.distance_to_star, item.station.name, item.fulljson);
     }
   });
 

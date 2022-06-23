@@ -10,7 +10,7 @@ export const db: Sqlite.Database = Sqlite('EDAR.sqlite3');
 // db.pragma('journal_mode = WAL');
 
 if (refresh_db) {
-  refreshDatabase(true);
+  refreshDatabase();
 } else {
   console.timeEnd('loaded up in');
   console.time('Found a trade in');
