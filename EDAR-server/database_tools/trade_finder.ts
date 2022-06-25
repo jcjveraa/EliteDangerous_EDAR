@@ -2,7 +2,6 @@ import {db} from '..';
 import fs from 'node:fs'
 import {ITradeFinderResult} from '../models/ITradeFinderResult';
 import {FindTradeOptions} from './FindTradeOptions';
-import { v4 as uuidv4 } from 'uuid';
 
 // const regex = new RegExp('/[\n\t]+/gm');
 const query = fs.readFileSync(__dirname + '/sql/trade_finder.sql', 'utf8').replace(/[\n\t]+/gm, ' ');
@@ -87,9 +86,9 @@ function findFirstTrade(opts: FindTradeOptions) {
 
   const params = {system_id: opts.currentSystemId, max_range: Math.pow(opts.maxJumpRangeLY, 2), max_age:  opts.getMaxAgeSeconds()};
   current_query = padSizeReplacer(opts.minPadSize, current_query);
-  
 
-  let unique_table_name = (Math.random().toString(36) + Math.random().toString(36)).replace(/[^a-z]+/g, '');
+
+  const unique_table_name = (Math.random().toString(36) + Math.random().toString(36)).replace(/[^a-z]+/g, '');
   current_query = table_name_replacer(unique_table_name, current_query);
 
   let temp_table_query = targetSystemReplacer(opts.targetSytem, query_temp_table);
@@ -105,7 +104,7 @@ function findFirstTrade(opts: FindTradeOptions) {
 
   const result: ITradeFinderResult[] = stmt.all(params);
 
-  db.exec('drop table if exists '+unique_table_name+';');
+  db.exec('drop table if exists ' + unique_table_name + ';');
   return result;
 }
 
@@ -151,7 +150,6 @@ function targetSystemReplacer(target_system_id: number| undefined, current_query
 
 function table_name_replacer(uuid: string, current_query: string) {
 
-    return current_query.replace('@@@TEMP_TABLE_NAME@@@', uuid);
+  return current_query.replace('@@@TEMP_TABLE_NAME@@@', uuid);
 
 }
-

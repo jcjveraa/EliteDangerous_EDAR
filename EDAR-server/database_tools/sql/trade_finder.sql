@@ -30,10 +30,10 @@ from
 		group by
 			listings_v6.commodity_id
 	) as table2 on table1.commodity_id = table2.commodity_id
-	LEFT JOIN stations_v6 as buy_station_full on buy_station_id = buy_station_full.id
-	LEFT JOIN stations_v6 as sell_station_full on sell_station_id = sell_station_full.id
-	LEFT JOIN systems_populated_v6 as buy_system_full on buy_system_full.id = buy_system_id
-	LEFT JOIN systems_populated_v6 as sell_system_full on sell_system_full.id = sell_system_id
+	inner JOIN stations_v6 as buy_station_full on buy_station_id = buy_station_full.id
+	inner JOIN stations_v6 as sell_station_full on sell_station_id = sell_station_full.id
+	inner JOIN systems_populated_v6 as buy_system_full on buy_system_full.id = buy_system_id
+	inner JOIN systems_populated_v6 as sell_system_full on sell_system_full.id = sell_system_id
 where
 	table1.station_id in (
 		select
