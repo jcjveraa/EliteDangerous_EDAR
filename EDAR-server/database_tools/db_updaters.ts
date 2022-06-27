@@ -74,12 +74,13 @@ async function recreate_stations_v6() {
     input: fs.createReadStream(systemsFile).pipe(zlib.createGunzip())
   });
 
-  const prep = db.prepare('INSERT OR IGNORE INTO `stations_v6`(`id`, `system_id`, `max_landing_pad_size`, `distance_to_star`, `name`, `full_json`) VALUES (?,?,?,?,?,?);');
+  const prep = db.prepare('INSERT OR IGNORE INTO `stations_v6`(`id`, `system_id`, `max_landing_pad_size`, `distance_to_star`, `name`,  `is_planetary`, `full_json`) VALUES (?,?,?,?,?,?);');
 
   const insertMany = db.transaction((cats: {station: IStation, fulljson: string}[]) => {
     for (const item of cats) {
       const numeric_max_landing_pad_size = MLP_Mapping.get(item.station.max_landing_pad_size);
-      prep.run(item.station.id, item.station.system_id, numeric_max_landing_pad_size, item.station.distance_to_star, item.station.name, item.fulljson);
+      const is_planetary = item.station.is_planetary ? 1 : 0;
+      prep.run(item.station.id, item.station.system_id, numeric_max_landing_pad_size, item.station.distance_to_star, item.station.name, is_planetary, item.fulljson);
     }
   });
 

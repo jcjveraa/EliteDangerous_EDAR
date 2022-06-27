@@ -64,17 +64,6 @@ export function findTrades(opts: FindTradeOptions, returnTrade = false): ITradeF
     fullResults.push(s);
   });
 
-  // if(!returnTrade && opts.two_way) {
-  //   fullResults.sort((a, b) => {
-  //     if(a.maxAttainableTwoWayProfit && b.maxAttainableTwoWayProfit) {
-  //       return a.maxAttainableTwoWayProfit - b.maxAttainableTwoWayProfit
-  //     } else {
-  //       return (a.commodity_id - b.commodity_id); ///
-  //     }
-  //   })
-  //   console.log(fullResults);
-  // }
-
   return bestResult;
 }
 

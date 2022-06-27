@@ -4,13 +4,14 @@ import {refreshDatabase} from './database_tools/db_updaters';
 import {FindTradeOptions} from './database_tools/FindTradeOptions';
 import {findTrades, MIN_PAD_SIZE} from './database_tools/trade_finder';
 
-const refresh_db = false;
+const refresh_db = true;
 
 export const db: Sqlite.Database = Sqlite('EDAR.sqlite3');
 
+
 if (refresh_db) {
-  db.pragma('journal_mode = WAL');
-  refreshDatabase();
+  // db.pragma('journal_mode = WAL');
+  refreshDatabase(true);
 } else {
   console.timeEnd('loaded up in');
   console.time('Found a two-way trade in');
