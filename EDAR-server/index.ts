@@ -13,7 +13,7 @@ if (refresh_db) {
   refreshDatabase();
 } else {
   console.timeEnd('loaded up in');
-  console.time('Found a trade in');
+  console.time('Found a two-way trade in');
   const tradeOpts = new FindTradeOptions('LHS 3447', 10, 100000, 16);
   tradeOpts.minPadSize = MIN_PAD_SIZE.L;
   let trade = findTrades(tradeOpts);
@@ -23,6 +23,8 @@ if (refresh_db) {
   //   returnTrade = findReturnTrade(trade.buy_station_id, trade.)
   // }
   console.log(trade);
+  console.timeEnd('Found a two-way trade in');
+  console.time('Found a trade in');
   tradeOpts.two_way = false;
   trade = findTrades(tradeOpts);
   console.log(trade);
