@@ -7,7 +7,7 @@ import csv from 'csv-parser';
 import {IListing} from '../models/IListing';
 import {IStation} from '../models/IStation';
 import zlib from 'node:zlib'
-import {MIN_PAD_SIZE} from './trade_finder';
+import {MIN_PAD_SIZE} from './FindTradeOptions';
 
 const BASE_FILE_LOC = 'files/'
 const INSERT_BATCH_SIZE = 100000;

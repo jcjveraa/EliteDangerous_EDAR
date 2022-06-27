@@ -1,5 +1,6 @@
 import {db} from '..';
-import {MIN_PAD_SIZE} from './trade_finder';
+export enum MIN_PAD_SIZE {S, M, L}
+
 
 export class FindTradeOptions {
 
@@ -7,6 +8,7 @@ export class FindTradeOptions {
   maxAgeDays = 3;
   targetStation? = -1;
   currentStation? = -1;
+  allowPlanetary = 0;
   two_way = true;
   private _targetSytem: number | undefined = undefined;
   public get targetSytem(): number | undefined {
