@@ -42,7 +42,7 @@ export function calculateUnixEpochDaysAgo(days: number) {
   return (currentEpoch - days * 24 * 3600);
 }
 
-export function systemNameToId(value: string | number): number | undefined {
+export function systemNameToId(value: string | number): number {
   const select_system_id_by_name_query = 'select systems_populated_v6.id from systems_populated_v6 where name = ?;';
   let result = -1;
   if (typeof value === 'string') {
