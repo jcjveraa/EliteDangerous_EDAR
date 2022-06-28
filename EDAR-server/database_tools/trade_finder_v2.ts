@@ -2,6 +2,8 @@ import fs from 'node:fs'
 import {db} from '..';
 import {ITradeFinderResult} from '../models/ITradeFinderResult';
 import {FindTradeOptions} from './FindTradeOptions';
+import {IQueryParameters} from './IQueryParameters';
+import {appendStationAndSystemNames_v2} from './sataionAndNameAppender';
 
 const systems_in_range_base_query = loadAndCleanSQL('/revised_sql/systems_in_range.sql');
 const stations_in_range_base_query = loadAndCleanSQL('/revised_sql/stations_in_range.sql');
@@ -16,34 +18,46 @@ function loadAndCleanSQL(filename: string) {
   return fs.readFileSync(__dirname + filename, 'utf8').replace(/[\n\t]+/gm, ' ');
 }
 
-// export function findTradeChain(numberOfHops: number) {
+export function findTradeChain(numberOfHopsToGo: number, opts: FindTradeOptions, hopChain: ITradeFinderResult[] = []): ITradeFinderResult[] {
+  let hop = findTradesFromStation_v2;
+  if (opts.currentStation === undefined) {
+    hop = findTradesInSystem_v2;
+  }
+  const hopResult = hop(opts);
+  const firstResult = hopResult[0];
+  hopChain.push(firstResult);
 
-// }
+  if (numberOfHopsToGo > 1) {
+    opts.currentStation = firstResult.sell_to_station_id;
+    opts.currentSystemId = firstResult.sell_to_system_id;
+    opts.fundsAvailable = opts.fundsAvailable + firstResult.total_profit;
+    return findTradeChain(numberOfHopsToGo - 1, opts, hopChain)
+  }
+
+  return appendStationAndSystemNames_v2(hopChain);
+}
 
 export function findTradesInSystem_v2(opts: FindTradeOptions): ITradeFinderResult[] {
-  const unique_table_postfix = generateTablePostfix();
-  const trades_selected_in_system = table_name_replacer(unique_table_postfix, trades_selected_in_system_base_query);
-
-  const params = getQueryParametersFromTradeOptions(opts);
-  setup_temp_databases(unique_table_postfix, params);
-
-  const result = db.prepare(trades_selected_in_system).all(params);
-
-  cleanup(unique_table_postfix);
-  return result;
+  return findTrades(opts, trades_selected_in_system_base_query);
 }
 
 export function findTradesFromStation_v2(opts: FindTradeOptions): ITradeFinderResult[] {
+  return findTrades(opts, trades_selected_from_station_base_query);
+}
+
+function findTrades(opts: FindTradeOptions, query: string): ITradeFinderResult[] {
+
   const unique_table_postfix = generateTablePostfix();
-  const trades_selected_from_station = table_name_replacer(unique_table_postfix, trades_selected_from_station_base_query);
+  query = table_name_replacer(unique_table_postfix, query);
 
   const params = getQueryParametersFromTradeOptions(opts);
   setup_temp_databases(unique_table_postfix, params);
 
-  const result = db.prepare(trades_selected_from_station).all(params);
+  const result = db.prepare(query).all(params);
 
   cleanup(unique_table_postfix);
   return result;
+
 }
 
 function getQueryParametersFromTradeOptions(opts: FindTradeOptions): IQueryParameters {
@@ -60,18 +74,6 @@ function getQueryParametersFromTradeOptions(opts: FindTradeOptions): IQueryParam
   };
 }
 
-interface IQueryParameters {
-    current_system_id: number;
-    allow_planetary: number;
-    max_range: number;
-    landing_pad_size: number;
-    current_station_id: number | undefined;
-    limit: number;
-    funds_available: number;
-    max_cargo_space: number;
-    max_age: number;
-}
-
 function generateTablePostfix() {
   // TODO probably there is a standard way of doing this... UUID meant another library though
   return '_' + (Math.random().toString(36) + Math.random().toString(36)).replace(/[^a-z]+/g, '');
@@ -81,7 +83,7 @@ function table_name_replacer(unique_table_postfix: string, current_query: string
   return current_query.replace(/_XYZZYX/g, unique_table_postfix);
 }
 
-function setup_temp_databases(unique_table_postfix: string, params: any) {
+function setup_temp_databases(unique_table_postfix: string, params: IQueryParameters) {
   const systems_in_range = table_name_replacer(unique_table_postfix, systems_in_range_base_query);
   const stations_in_range = table_name_replacer(unique_table_postfix, stations_in_range_base_query);
   const listings_in_current_system = table_name_replacer(unique_table_postfix, listings_in_current_system_base_query);
