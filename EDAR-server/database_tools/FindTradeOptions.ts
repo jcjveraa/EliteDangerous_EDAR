@@ -6,20 +6,9 @@ export class FindTradeOptions {
 
   minPadSize: MIN_PAD_SIZE = MIN_PAD_SIZE.S;
   maxAgeDays = 3;
-  targetStation? = -1;
-  currentStation? = -1;
+  currentStation: number|undefined = undefined;
   allowPlanetary: boolean;
   two_way = true;
-  private _targetSytem: number | undefined = undefined;
-  public get targetSytem(): number | undefined {
-    return this._targetSytem;
-  }
-  public set targetSytem(value: number | string | undefined) {
-    if (value) {
-      value = systemNameToId(value);
-      this._targetSytem = value;
-    }
-  }
   cargoSpaceAvailable: number;
   fundsAvailable: number;
   currentSystemId: number;
