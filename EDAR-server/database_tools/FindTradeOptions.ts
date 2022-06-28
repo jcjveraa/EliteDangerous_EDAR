@@ -1,5 +1,5 @@
 import {db} from '..';
-export enum MIN_PAD_SIZE {S, M, L}
+export enum MIN_PAD_SIZE { S, M, L }
 
 
 export class FindTradeOptions {
@@ -8,7 +8,7 @@ export class FindTradeOptions {
   maxAgeDays = 3;
   targetStation? = -1;
   currentStation? = -1;
-  allowPlanetary = 0;
+  allowPlanetary: boolean;
   two_way = true;
   private _targetSytem: number | undefined = undefined;
   public get targetSytem(): number | undefined {
@@ -26,17 +26,17 @@ export class FindTradeOptions {
   maxJumpRangeLY: number;
 
   public getMaxAgeSeconds() {
-    const currentEpoch = Math.floor(new Date().getTime() / 1000); // seconds
-    return currentEpoch - this.maxAgeDays * 24 * 3600;
+    return calculateUnixEpochDaysAgo(this.maxAgeDays);
   }
 
   /***
    *
    */
-  constructor(currentSystem: number | string, maxJumpRangeLY: number, fundsAvailable: number, cargoSpaceAvailable: number) {
+  constructor(currentSystem: number | string, maxJumpRangeLY: number, fundsAvailable: number, cargoSpaceAvailable: number, allowPlanetary = false) {
     this.cargoSpaceAvailable = cargoSpaceAvailable;
     this.fundsAvailable = fundsAvailable;
     this.maxJumpRangeLY = maxJumpRangeLY;
+    this.allowPlanetary = allowPlanetary;
     const curSys = systemNameToId(currentSystem);
     if (!curSys) {
       // console.error(`Could not find system id/name ${currentSystem} in the database!`);
@@ -47,6 +47,11 @@ export class FindTradeOptions {
   }
 }
 
+
+export function calculateUnixEpochDaysAgo(days: number) {
+  const currentEpoch = Math.floor(new Date().getTime() / 1000); // seconds
+  return (currentEpoch - days * 24 * 3600);
+}
 
 export function systemNameToId(value: string | number): number | undefined {
   const select_system_id_by_name_query = 'select systems_populated_v6.id from systems_populated_v6 where name = ?;';

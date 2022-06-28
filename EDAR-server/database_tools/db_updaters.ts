@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs from 'node:fs'
 import * as readline from 'node:readline';
 import {db} from '..';
 import {downloadEDDB} from '../downloader/downloader';
@@ -7,7 +7,7 @@ import csv from 'csv-parser';
 import {IListing} from '../models/IListing';
 import {IStation} from '../models/IStation';
 import zlib from 'node:zlib'
-import {MIN_PAD_SIZE} from './FindTradeOptions';
+import {calculateUnixEpochDaysAgo, MIN_PAD_SIZE} from './FindTradeOptions';
 
 const BASE_FILE_LOC = 'files/'
 const INSERT_BATCH_SIZE = 100000;
@@ -74,13 +74,13 @@ async function recreate_stations_v6() {
     input: fs.createReadStream(systemsFile).pipe(zlib.createGunzip())
   });
 
-  const prep = db.prepare('INSERT OR IGNORE INTO `stations_v6`(`id`, `system_id`, `max_landing_pad_size`, `distance_to_star`, `name`,  `is_planetary`, `full_json`) VALUES (?,?,?,?,?,?);');
+  const prep = db.prepare('INSERT OR IGNORE INTO `stations_v6`(`id`, `system_id`, `max_landing_pad_size`, `distance_to_star`, `name`, `is_planetary`) VALUES (?,?,?,?,?, ?);');
 
   const insertMany = db.transaction((cats: {station: IStation, fulljson: string}[]) => {
     for (const item of cats) {
       const numeric_max_landing_pad_size = MLP_Mapping.get(item.station.max_landing_pad_size);
       const is_planetary = item.station.is_planetary ? 1 : 0;
-      prep.run(item.station.id, item.station.system_id, numeric_max_landing_pad_size, item.station.distance_to_star, item.station.name, is_planetary, item.fulljson);
+      prep.run(item.station.id, item.station.system_id, numeric_max_landing_pad_size, item.station.distance_to_star, item.station.name, is_planetary);
     }
   });
 
@@ -106,15 +106,19 @@ async function recreate_stations_v6() {
 }
 
 async function recreate_listings_v6() {
+  const ignoreBeforeEpoch = calculateUnixEpochDaysAgo(14);
+
   exec_recreate('listings_v6');
   const listingsFile = BASE_FILE_LOC + 'listings.csv.gz';
   const prep = db.prepare('INSERT OR IGNORE INTO `listings_v6`(id, station_id, commodity_id, supply, supply_bracket, buy_price, sell_price, demand, demand_bracket, collected_at) VALUES (?,?,?,?,?,?,?,?,?,?);');
 
   const insertMany = db.transaction((cats: IListing[]) => {
     for (const item of cats) {
-      prep.run(item.id, item.station_id, item.commodity_id,
-        item.supply, item.supply_bracket, item.buy_price,
-        item.sell_price, item.demand, item.demand_bracket, item.collected_at);
+      if(item.collected_at > ignoreBeforeEpoch){
+        prep.run(item.id, item.station_id, item.commodity_id,
+          item.supply, item.supply_bracket, item.buy_price,
+          item.sell_price, item.demand, item.demand_bracket, item.collected_at);
+      }
     }
   });
 
