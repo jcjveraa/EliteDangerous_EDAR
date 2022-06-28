@@ -36,10 +36,12 @@ export class FindTradeOptions {
   }
 }
 
-
 export function calculateUnixEpochDaysAgo(days: number) {
-  const currentEpoch = Math.floor(new Date().getTime() / 1000); // seconds
-  return (currentEpoch - days * 24 * 3600);
+  return (calculateUnixEpoch() - days * 24 * 3600);
+}
+
+export function calculateUnixEpoch() {
+  return Math.floor(new Date().getTime() / 1000); // seconds
 }
 
 export function systemNameToId(value: string | number): number {

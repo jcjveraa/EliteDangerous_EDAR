@@ -9,7 +9,3 @@ sell_price INTEGER,
 demand INTEGER, 
 demand_bracket INTEGER, 
 collected_at INTEGER);
-CREATE INDEX `ids` ON `listings_v6` (
-	`station_id`	ASC,
-	`commodity_id`	ASC
-);
