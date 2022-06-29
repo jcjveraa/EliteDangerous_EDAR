@@ -1,6 +1,8 @@
 import express from 'express';
-const app = express();
-const port = 3000;
+import cors from 'cors';
+import getSystemNames from './web_api/getSystemNames'
+export const app = express();
+const port = 3001;
 
 
 console.time('loaded up in');
@@ -11,7 +13,8 @@ import {FindTradeOptions, systemNameToId} from './database_tools/FindTradeOption
 import {findTradeChain} from './database_tools/trade_finder_v2';
 import {run} from './EDDNConnector';
 
-const refresh_db = true;
+
+const refresh_db = false;
 const download_source_from_EDDB = false;
 
 export const db: Sqlite.Database = Sqlite('EDAR.sqlite3');
@@ -30,22 +33,24 @@ if (refresh_db) {
 
 }
 
+app.use(cors())
 
-// app.get('/api/bySystemName/:systemName', (req, res) => {
-//   let sysId = -1;
-//   try {
-//     sysId = systemNameToId(req.params.systemName);
-//     console.log(sysId);
-//     const tradeOpts = new FindTradeOptions(sysId, 10, 500000, 50, false);
-//     res.json(findTradeChain(3, tradeOpts)).send();
-//   } catch (error) {
-//     res.sendStatus(404);
-//   }
+app.use('/api/SystemNameAutocomplete', getSystemNames);
 
-// })
+app.get('/api/bySystemName/:systemName', (req, res) => {
+  let sysId = -1;
+  try {
+    sysId = systemNameToId(req.params.systemName);
+    console.log(sysId);
+    const tradeOpts = new FindTradeOptions(sysId, 10, 500000, 50, false);
+    res.json(findTradeChain(3, tradeOpts)).send();
+  } catch (error) {
+    res.sendStatus(404);
+  }
+})
 
-// app.listen(port, () => {
-//   console.log(`EDAR listening on port ${port}`)
-// })
+app.listen(port, () => {
+  console.log(`EDAR listening on port ${port}`)
+})
 
-run();
+// run();

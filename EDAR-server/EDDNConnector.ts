@@ -11,8 +11,13 @@ const log_file = fs.createWriteStream(__dirname + '/debug.log');
 
 async function processMessage(msg: IEddnCommodity3) {
   const collected_at = calculateUnixEpoch();
-  const station_id: number = db.prepare('SELECT station_id from station_id_lookup where system_name == ? and station_name == ?')
+  const station_id = db.prepare('SELECT station_id from station_id_lookup where system_name == ? and station_name == ?')
     .get(msg.message.systemName, msg.message.stationName);
+
+  if(station_id === undefined) {
+    console.warn('Did not find System:', msg.message.systemName, 'Station:', msg.message.stationName, msg.message.commodities.length);
+    return;
+  }
 
   const commodityIdQuery = db.prepare('SELECT id from commodities_v6 where EDDN_name == ?');
 
@@ -22,7 +27,8 @@ async function processMessage(msg: IEddnCommodity3) {
     if(commodityId === undefined){
       // commodity.
       // log_file.write(commodity.name + '\n');
-      console.log(commodity.name + '\n');
+      console.log(commodity.name, commodity.sellPrice, commodity.buyPrice, '\n');
+
       // console.log(commodity. + '\n');
     }
   });

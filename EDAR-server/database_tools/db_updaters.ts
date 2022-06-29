@@ -90,7 +90,7 @@ async function recreate_commodities_v6() {
   const commodities_2 = JSON.parse(zlib.gunzipSync(file).toString('utf8'));
 
   Object.entries(commodities_2).forEach(([key, value]) => {
-    const val = value as {category:string, name:string, id: string};
+    const val = value as { category: string, name: string, id: string };
     const full_name = val.name;
 
     db.prepare('UPDATE commodities_v6 set EDDN_name = ? WHERE name = ?').run(key, full_name);
