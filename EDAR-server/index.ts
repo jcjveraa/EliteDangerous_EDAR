@@ -1,5 +1,5 @@
 import express from 'express';
-import cors from 'cors';
+// import cors from 'cors';
 import getSystemNames from './web_api/getSystemNames'
 export const app = express();
 const port = 3001;
@@ -33,7 +33,7 @@ if (refresh_db) {
 
 }
 
-app.use(cors())
+//app.use(cors());
 
 app.use('/api/SystemNameAutocomplete', getSystemNames);
 
