@@ -16,6 +16,10 @@ CREATE INDEX `station_name` ON `stations_v6` (
 	`name`	ASC
 );
 
+CREATE INDEX `ed_market_id` ON `stations_v6` (
+	`ed_market_id`	ASC
+);
+
 CREATE INDEX `max_landing_pad_size` ON `stations_v6` (
 	`max_landing_pad_size`	ASC
 );
