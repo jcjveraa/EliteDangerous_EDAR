@@ -3,3 +3,4 @@ reference_files/*
 node_modules
 files/*
 dist
+.env

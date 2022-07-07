@@ -1,9 +1,12 @@
 import express from 'express';
+import bodyParser from 'body-parser';
 // import cors from 'cors';
 import getSystemNames from './web_api/getSystemNames'
 export const app = express();
 const port = 3001;
 
+import dotenv from 'dotenv';
+dotenv.config();
 
 console.time('loaded up in');
 import Sqlite from 'better-sqlite3';
@@ -12,6 +15,8 @@ import {FindTradeOptions, systemNameToId} from './database_tools/FindTradeOption
 // import {findTrades, MIN_PAD_SIZE} from './database_tools/trade_finder';
 import {findTradeChain} from './database_tools/trade_finder_v2';
 import {run} from './EDDNConnector';
+import OAuth from './web_api/OAuth';
+import OAuthTest from './oauth_test/OAuthTest'
 
 
 const refresh_db = false;
@@ -36,6 +41,12 @@ if (refresh_db) {
 //app.use(cors());
 
 app.use('/api/SystemNameAutocomplete', getSystemNames);
+app.use('/api/FrontierApi', OAuth);
+
+if(process.env.NODE_ENV === 'development') {
+  app.use(bodyParser.urlencoded({extended: true}));
+  app.use('/', OAuthTest);
+}
 
 app.get('/api/bySystemName/:systemName', (req, res) => {
   let sysId = -1;
