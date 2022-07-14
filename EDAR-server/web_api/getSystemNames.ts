@@ -1,4 +1,4 @@
-import {app, db} from '../index'
+import {db} from '../index'
 import {loadSqlStringFromFile} from '../database_tools/loadSqlStringFromFile';
 import {Router} from 'express';
 

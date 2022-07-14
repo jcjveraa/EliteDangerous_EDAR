@@ -1,9 +1,10 @@
 import express from 'express';
-// import cors from 'cors';
+import cors from 'cors';
 import getSystemNames from './web_api/getSystemNames'
 export const app = express();
-const port = 3001;
+import dotenv from 'dotenv'
 
+dotenv.config();
 
 console.time('loaded up in');
 import Sqlite from 'better-sqlite3';
@@ -33,24 +34,27 @@ if (refresh_db) {
 
 }
 
-//app.use(cors());
+if (process.env.NODE_ENV !== 'production') {
+  app.use(cors());
+}
 
 app.use('/api/SystemNameAutocomplete', getSystemNames);
 
-app.get('/api/bySystemName/:systemName', (req, res) => {
+app.get('/api/findTradeBySystemName/:systemName', (req, res) => {
   let sysId = -1;
   try {
     sysId = systemNameToId(req.params.systemName);
-    console.log(sysId);
+    // console.log(sysId);
     const tradeOpts = new FindTradeOptions(sysId, 10, 500000, 50, false);
     res.json(findTradeChain(3, tradeOpts)).send();
   } catch (error) {
+    console.error(error);
     res.sendStatus(404);
   }
 })
 
-app.listen(port, () => {
-  console.log(`EDAR listening on port ${port}`)
+app.listen(process.env.API_PORT, () => {
+  console.log(`EDAR listening on port ${process.env.API_PORT} in ${process.env.NODE_ENV} mode`)
 })
 
 // run();

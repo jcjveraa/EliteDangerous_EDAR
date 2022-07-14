@@ -18,4 +18,5 @@ export interface ITradeFinderResultWithNames extends ITradeFinderResult {
   buy_from_system_name: string;
   sell_to_station_name: string;
   sell_to_system_name: string;
+  commodity_name: string;
 }

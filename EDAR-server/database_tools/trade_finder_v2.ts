@@ -24,17 +24,27 @@ export function findTradeChain(numberOfHopsToGo: number, opts: FindTradeOptions,
     hop = findTradesInSystem_v2;
   }
   const hopResult = hop(opts);
-  const firstResult = hopResult[0];
-  hopChain.push(firstResult);
+  if (process.env.NODE_ENV !== 'production') {
+    // console.log(hopResult, hopResult[0]);
+  }
 
-  if (numberOfHopsToGo > 1) {
+  const firstResult = hopResult[0];
+  if(firstResult) {
+    hopChain.push(firstResult);
+  }
+
+  if (numberOfHopsToGo > 1 && firstResult) {
     opts.currentStation = firstResult.sell_to_station_id;
     opts.currentSystemId = firstResult.sell_to_system_id;
     opts.fundsAvailable = opts.fundsAvailable + firstResult.total_profit;
     return findTradeChain(numberOfHopsToGo - 1, opts, hopChain)
   }
 
-  return appendStationAndSystemNames_v2(hopChain);
+  if (hopChain.length > 0) {
+    return appendStationAndSystemNames_v2(hopChain);
+  } else {
+    return [];
+  }
 }
 
 export function findTradesInSystem_v2(opts: FindTradeOptions): ITradeFinderResult[] {
