@@ -5,3 +5,4 @@ files/*
 !files/items.json.gz
 dist
 .env
+coverage

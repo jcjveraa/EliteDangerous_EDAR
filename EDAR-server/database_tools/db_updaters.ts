@@ -1,16 +1,16 @@
-import fs from 'node:fs'
+import fs from 'node:fs';
 import * as readline from 'node:readline';
-import {db} from '..';
+import { db } from '..';
 import {downloadEDDB} from '../downloader/downloader';
 import {ISystemPopulated} from '../models/ISytemPopulated';
 import {ICommodity} from '../models/ICommodity';
 import csv from 'csv-parser';
 import {IListing} from '../models/IListing';
 import {IStation} from '../models/IStation';
-import zlib from 'node:zlib'
+import zlib from 'node:zlib';
 import {calculateUnixEpochDaysAgo, MIN_PAD_SIZE} from './FindTradeOptions';
 
-const BASE_FILE_LOC = 'files/'
+const BASE_FILE_LOC = 'files/';
 const INSERT_BATCH_SIZE = 100000;
 
 const MLP_Mapping = new Map<string, number>();
@@ -99,7 +99,7 @@ async function recreate_commodities_v6() {
     const full_name = val.name;
 
     db.prepare('UPDATE commodities_v6 set EDDN_name = ? WHERE name = ?').run(key, full_name);
-  })
+  });
 
 
   console.timeEnd('Insert into commodities_v6');

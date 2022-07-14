@@ -1,31 +1,41 @@
+import dotenv from 'dotenv';
+dotenv.config();
+import {NODE_ENV_isDevelopment, NODE_ENV_isTest } from './web_api/NODE_ENV_isDevelopment';
+import Sqlite from 'better-sqlite3';
+export const db: Sqlite.Database = Sqlite('EDAR.sqlite3');
+
+if (NODE_ENV_isTest) { process.env.API_PORT = '0'; }
+
 import express from 'express';
 import compression from 'compression';
 import bodyParser from 'body-parser';
-// import cors from 'cors';
-import getSystemNames from './web_api/getSystemNames'
+import cors from 'cors';
+import getSystemNames from './web_api/getSystemNames';
 export const app = express();
-const port = 3001;
-
-import dotenv from 'dotenv';
-dotenv.config();
+import session from 'express-session';
 
 console.time('loaded up in');
-import Sqlite from 'better-sqlite3';
-import {refreshDatabase} from './database_tools/db_updaters';
-import {FindTradeOptions, systemNameToId} from './database_tools/FindTradeOptions';
+
+import { refreshDatabase } from './database_tools/db_updaters';
+import { FindTradeOptions, systemNameToId } from './database_tools/FindTradeOptions';
 // import {findTrades, MIN_PAD_SIZE} from './database_tools/trade_finder';
-import {findTradeChain} from './database_tools/trade_finder_v2';
+import { findTradeChain } from './database_tools/trade_finder_v2';
 import OAuth from './web_api/OAuth';
-import OAuthTest from './oauth_test/OAuthTest'
-import getPlayerLocation from './web_api/getPlayerLocation'
+import OAuthTest from './oauth_test/OAuthTest';
+import getPlayerLocation from './web_api/getPlayerLocation';
 import webClient from './web_api/webClient';
+import { sessionSettings } from './web_api/CookieSettings';
+app.disable('x-powered-by');
+
+const refresh_db = false;
+const download_source_from_EDDB = false;
 
 
-const refresh_db = true;
-const download_source_from_EDDB = true;
 
-export const db: Sqlite.Database = Sqlite('EDAR.sqlite3');
-
+app.use(session(
+  sessionSettings
+));
+app.use(compression()); //TODO check if required when hosting behind nginx
 
 if (refresh_db) {
   // db.pragma('journal_mode = WAL');
@@ -40,17 +50,20 @@ if (refresh_db) {
 
 }
 
-//app.use(cors());
+if (NODE_ENV_isDevelopment) {
+  console.warn('Cors enabled!');
+  app.use(cors());
+}
+
 
 app.use('/api/SystemNameAutocomplete', getSystemNames);
 app.use('/api/FrontierApi', OAuth);
 
-if(process.env.NODE_ENV === 'development') {
-  app.use(bodyParser.urlencoded({extended: true}));
+if (NODE_ENV_isDevelopment) {
+  app.use(bodyParser.urlencoded({ extended: true }));
   app.use('/', OAuthTest);
 }
 
-app.use(compression());
 app.use('/api/capi', getPlayerLocation);
 app.use('/api/webclient', webClient);
 
@@ -64,10 +77,10 @@ app.get('/api/bySystemName/:systemName', (req, res) => {
   } catch (error) {
     res.sendStatus(404);
   }
-})
+});
 
-app.listen(port, () => {
-  console.log(`EDAR listening on port ${port}`)
-})
+export const server = app.listen(process.env.API_PORT, () => {
+  console.log(`EDAR listening on port ${process.env.API_PORT}`);
+});
 
 // run();

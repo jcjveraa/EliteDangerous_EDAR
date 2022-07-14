@@ -7,7 +7,7 @@ import zlib from 'node:zlib';
 import { IFrontierBearerToken } from '../models/IFrontierBearerToken';
 import { httpRequestSender } from './httpRequestSender';
 import * as stateStore from '../stateStore/StateStore';
-import NODE_ENV_isDevelopment from './NODE_ENV_isDevelopment';
+import {NODE_ENV_isDevelopment} from './NODE_ENV_isDevelopment';
 
 
 const router = Router();

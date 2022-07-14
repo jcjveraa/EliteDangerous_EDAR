@@ -1,4 +1,4 @@
-import {db} from '..';
+import { db } from '..';
 export enum MIN_PAD_SIZE { S, M, L }
 
 

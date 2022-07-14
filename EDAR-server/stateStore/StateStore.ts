@@ -1,12 +1,12 @@
-import { db } from '../index';
-import NODE_ENV_isDevelopment from '../web_api/NODE_ENV_isDevelopment';
+import { db } from '..';
+import {NODE_ENV_isDevelopment} from '../web_api/NODE_ENV_isDevelopment';
 
 export async function push(state_uuid: string, attempt = 0): Promise<boolean> {
   if (attempt === 10) {
     console.error('Inserting into state table failed 10 times, ceasing to try...');
     return false;
   }
-  const query = db.prepare('INSERT INTO `EDAR_state` (`uuid`,`created_at`,`last_seen`) VALUES (?,?,?)')
+  const query = db.prepare('INSERT INTO `EDAR_state` (`uuid`,`created_at`,`last_seen`) VALUES (?,?,?)');
   const result = query.run(state_uuid, Date.now(), Date.now());
   if (result.changes !== 1) {
     console.warn('Inserting into state table failed, retrying...');

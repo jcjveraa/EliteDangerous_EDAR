@@ -1,4 +1,4 @@
-import {db} from '../index'
+import { db } from '..';
 import {loadSqlStringFromFile} from '../database_tools/loadSqlStringFromFile';
 import {Router} from 'express';
 
@@ -18,7 +18,7 @@ router.get('/:PartialSystemName?', (req, res) => {
   const listOfSystems: string[] = [];
   result.forEach(r => {
     listOfSystems.push(r.name);
-  })
+  });
 
   res.json(listOfSystems);
 });
@@ -27,4 +27,4 @@ router.get('/:PartialSystemName?', (req, res) => {
 //   res.send('yo!' + req.params.markle);
 // });
 
-export default router
+export default router;

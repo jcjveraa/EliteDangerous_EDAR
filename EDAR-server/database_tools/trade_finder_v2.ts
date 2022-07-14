@@ -1,5 +1,5 @@
-import fs from 'node:fs'
-import {db} from '..';
+import fs from 'node:fs';
+import { db } from '..';
 import {ITradeFinderResult} from '../models/ITradeFinderResult';
 import {FindTradeOptions} from './FindTradeOptions';
 import {IQueryParameters} from './IQueryParameters';
@@ -31,7 +31,7 @@ export function findTradeChain(numberOfHopsToGo: number, opts: FindTradeOptions,
     opts.currentStation = firstResult.sell_to_station_id;
     opts.currentSystemId = firstResult.sell_to_system_id;
     opts.fundsAvailable = opts.fundsAvailable + firstResult.total_profit;
-    return findTradeChain(numberOfHopsToGo - 1, opts, hopChain)
+    return findTradeChain(numberOfHopsToGo - 1, opts, hopChain);
   }
 
   return appendStationAndSystemNames_v2(hopChain);

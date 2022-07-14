@@ -1,4 +1,4 @@
-import {db} from '..';
+import { db } from '..';
 import {ITradeFinderResult, ITradeFinderResultWithNames} from '../models/ITradeFinderResult';
 
 interface IIdNameMap { [id: number]: string; }
