@@ -1,8 +1,8 @@
 import https from 'https';
 import http from 'http';
-import {useHttps, modifyOptionsForTesting, extractDataFromMessage, httpModuleToUse} from './OAuth';
+import {modifyOptionsForTesting, extractDataFromMessage, httpModuleToUse} from './OAuth';
 
-export function httpRequestSender<T>(options: https.RequestOptions, dataToSend?: string): Promise<T> {
+export function httpRequestSender<T>(options: https.RequestOptions, dataToSend?: string, useHttps = true): Promise<T> {
   return new Promise((resolve, reject) => {
     if (!useHttps) {
       modifyOptionsForTesting(options);

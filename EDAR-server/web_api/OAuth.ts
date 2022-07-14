@@ -1,5 +1,4 @@
 import {Router} from 'express';
-import {randomUUID} from 'node:crypto'
 import {CallbackParamsType, generators, IssuerMetadata} from 'openid-client';
 import {Issuer} from 'openid-client';
 import https from 'https';
@@ -7,11 +6,13 @@ import http from 'http';
 import zlib from 'node:zlib'
 import {IFrontierBearerToken} from '../models/IFrontierBearerToken'
 import {httpRequestSender} from './httpRequestSender';
+import * as stateStore from '../stateStore/StateStore';
+
 
 const router = Router();
 export default router;
 
-const stateStore: string[] = [];
+// const stateStore: string[] = [];
 
 const FRONTIER_API = '/FrontierApi';
 const CALLBACK_URI_V2 = process.env.BASE_API_URL + FRONTIER_API + '/codeCallbackV2';
@@ -49,14 +50,21 @@ const client = new Client({
   response_types: ['code']
 })
 
-router.get('/requestTokenV2', (req, res) => {
+router.get('/requestTokenV2/:state', (req, res) => {
   // store the code_verifier in your framework's session mechanism, if it is a cookie based solution
   // it should be httpOnly (not readable by javascript) and encrypted.
 
   const code_challenge = generators.codeChallenge(code_verifier);
 
-  const state = randomUUID();
-  stateStore.push(state);
+  const regex_UUIDV4 = /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i;
+
+  const state = req.params.state;
+  if(!state.match(regex_UUIDV4)) {
+    res.send(400);
+    return;
+  }
+
+  // stateStore.push(state);
 
   const SCOPE = 'capi';
 
@@ -84,25 +92,25 @@ router.get('/codeCallbackV2', async(req, res) => {
   if(process.env.NODE_ENV === 'development'){
     console.log(token);
   }
-  const authInfo = await decodeToken(token);
-  res.json(authInfo);
+  // const authInfo = await decodeToken(token);
+  res.json(token);
 });
 
-function decodeToken(token: IFrontierBearerToken){
-  const headers = {
-    'Accept-Encoding': 'gzip',
-    'Authorization': `Bearer ${token.access_token}`
-  }
+// function decodeToken(token: IFrontierBearerToken){
+//   const headers = {
+//     'Accept-Encoding': 'gzip, *',
+//     'Authorization': `Bearer ${token.access_token}`
+//   }
 
-  const options: https.RequestOptions = {
-    host: liveOptions.host,
-    method: 'GET',
-    headers: headers,
-    path: '/decode'
-  }
+//   const options: https.RequestOptions = {
+//     host: liveOptions.host,
+//     method: 'GET',
+//     headers: headers,
+//     path: '/decode'
+//   }
 
-  return httpRequestSender(options);
-}
+//   return httpRequestSender(options, undefined, useHttps);
+// }
 
 
 async function getToken(code_verifier: string, params: CallbackParamsType): Promise<IFrontierBearerToken> {
@@ -131,7 +139,7 @@ async function getToken(code_verifier: string, params: CallbackParamsType): Prom
     path: '/token'
   }
 
-  return httpRequestSender<IFrontierBearerToken>(options, formDataString);
+  return httpRequestSender<IFrontierBearerToken>(options, formDataString, useHttps);
 }
 
 export function extractDataFromMessage(res: http.IncomingMessage, dataBuffer: Buffer) {
