@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS `EDAR_state`;
+CREATE TABLE IF NOT EXISTS `EDAR_state` (uuid TEXT, created_at INTEGER, last_seen INTEGER, PRIMARY KEY(`uuid`));
