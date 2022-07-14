@@ -1,4 +1,5 @@
 import express from 'express';
+import compression from 'compression';
 import bodyParser from 'body-parser';
 // import cors from 'cors';
 import getSystemNames from './web_api/getSystemNames'
@@ -14,13 +15,14 @@ import {refreshDatabase} from './database_tools/db_updaters';
 import {FindTradeOptions, systemNameToId} from './database_tools/FindTradeOptions';
 // import {findTrades, MIN_PAD_SIZE} from './database_tools/trade_finder';
 import {findTradeChain} from './database_tools/trade_finder_v2';
-import {run} from './EDDNConnector';
 import OAuth from './web_api/OAuth';
 import OAuthTest from './oauth_test/OAuthTest'
+import getPlayerLocation from './web_api/getPlayerLocation'
+import webClient from './web_api/webClient';
 
 
-const refresh_db = false;
-const download_source_from_EDDB = false;
+const refresh_db = true;
+const download_source_from_EDDB = true;
 
 export const db: Sqlite.Database = Sqlite('EDAR.sqlite3');
 
@@ -47,6 +49,10 @@ if(process.env.NODE_ENV === 'development') {
   app.use(bodyParser.urlencoded({extended: true}));
   app.use('/', OAuthTest);
 }
+
+app.use(compression());
+app.use('/api/capi', getPlayerLocation);
+app.use('/api/webclient', webClient);
 
 app.get('/api/bySystemName/:systemName', (req, res) => {
   let sysId = -1;

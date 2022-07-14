@@ -1,0 +1,2 @@
+- Automatically infer cargo size for each type of ship based on loadout (cargo racks) & observed capacity
+- Show online status of companion API & my own API
