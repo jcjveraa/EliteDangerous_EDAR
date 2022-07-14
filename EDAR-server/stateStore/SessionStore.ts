@@ -77,9 +77,9 @@ export default class EDARSessionStore extends session.Store {
   }
 
   private encrypt(toEncrypt: string, password: string) {
-    const salt = this.newSalt();
-    const key = crypto.scryptSync(password, salt, 32);
-    const iv = crypto.randomFillSync(new Uint8Array(16));
+    const salt = await this.newSalt();
+    const key = await crypto.scrypt(password, salt, 32);
+    const iv = await crypto.randomFill(new Uint8Array(16));
 
     const cipher = crypto.createCipheriv(this.algorithm, key, iv);
 
@@ -92,7 +92,11 @@ export default class EDARSessionStore extends session.Store {
   }
 
   private newSalt() {
-    return crypto.randomBytes(16);
+    return new Promise(
+      (resolve, reject)=>
+        crypto.randomBytes(16, 
+          (bytes)=> 
+            resolve(bytes)));
   }
 
   private decrypt(toDencrypt: string, password: string) {
