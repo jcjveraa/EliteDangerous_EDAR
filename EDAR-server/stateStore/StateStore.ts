@@ -1,13 +1,14 @@
-import {db} from '../index';
+import { db } from '../index';
+import NODE_ENV_isDevelopment from '../web_api/NODE_ENV_isDevelopment';
 
 export async function push(state_uuid: string, attempt = 0): Promise<boolean> {
-  if(attempt === 10) {
+  if (attempt === 10) {
     console.error('Inserting into state table failed 10 times, ceasing to try...');
     return false;
   }
   const query = db.prepare('INSERT INTO `EDAR_state` (`uuid`,`created_at`,`last_seen`) VALUES (?,?,?)')
   const result = query.run(state_uuid, Date.now(), Date.now());
-  if(result.changes !== 1) {
+  if (result.changes !== 1) {
     console.warn('Inserting into state table failed, retrying...');
     return await push(state_uuid, attempt + 1);
   }
@@ -25,7 +26,7 @@ export async function includes(state_uuid: string) {
 export async function updateLastSeen(state_uuid: string) {
   const query = db.prepare('UPDATE `EDAR_state` SET `last_seen`=? WHERE `uuid`=?');
   const result = query.run(state_uuid, Date.now());
-  if(result.changes !== 1) {
+  if (result.changes !== 1) {
     console.warn('Updating the state table failed!');
   }
 }
@@ -33,7 +34,7 @@ export async function updateLastSeen(state_uuid: string) {
 export async function numberOfUsers() {
   const query = db.prepare('SELECT COUNT(`uuid`) FROM `EDAR_state`');
   const result = query.get();
-  if(process.env.NODE_ENV === 'development') {
+  if (NODE_ENV_isDevelopment) {
     console.log(result);
   }
 }

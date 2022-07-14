@@ -1,12 +1,13 @@
-import {Router} from 'express';
-import {CallbackParamsType, generators, IssuerMetadata} from 'openid-client';
-import {Issuer} from 'openid-client';
+import { Router } from 'express';
+import { CallbackParamsType, generators, IssuerMetadata } from 'openid-client';
+import { Issuer } from 'openid-client';
 import https from 'https';
 import http from 'http';
-import zlib from 'node:zlib'
-import {IFrontierBearerToken} from '../models/IFrontierBearerToken'
-import {httpRequestSender} from './httpRequestSender';
+import zlib from 'node:zlib';
+import { IFrontierBearerToken } from '../models/IFrontierBearerToken';
+import { httpRequestSender } from './httpRequestSender';
 import * as stateStore from '../stateStore/StateStore';
+import NODE_ENV_isDevelopment from './NODE_ENV_isDevelopment';
 
 
 const router = Router();
@@ -32,23 +33,23 @@ export const httpModuleToUse = useHttps ? https : http;
 const testOptions: http.RequestOptions = {
   host: 'localhost',
   port: 3001,
-}
+};
 
 const liveOptions: https.RequestOptions = {
   host: 'auth.frontierstore.net',
-}
+};
 
 const issuer = new Issuer(CONFIGV2);
-const {Client} = issuer;
+const { Client } = issuer;
 const code_verifier = generators.codeVerifier();
 
 const client = new Client({
   client_id: <string>process.env.FRONTIER_CLIENT_ID,
-  client_secret: <string>process.env.FRONTIER_SHARED_KEY,
+  // client_secret: <string>process.env.FRONTIER_SHARED_KEY,
   redirect_uris: [CALLBACK_URI_V2],
   token_endpoint_auth_method: 'none',
   response_types: ['code']
-})
+});
 
 router.get('/requestTokenV2/:state', (req, res) => {
   // store the code_verifier in your framework's session mechanism, if it is a cookie based solution
@@ -59,8 +60,8 @@ router.get('/requestTokenV2/:state', (req, res) => {
   const regex_UUIDV4 = /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i;
 
   const state = req.params.state;
-  if(!state.match(regex_UUIDV4)) {
-    res.send(400);
+  if (!state.match(regex_UUIDV4)) {
+    res.sendStatus(400);
     return;
   }
 
@@ -75,21 +76,21 @@ router.get('/requestTokenV2/:state', (req, res) => {
     state: state
   });
 
-  console.log('Auth url:', authUrl)
+  console.log('Auth url:', authUrl);
   // res.send('yo')
   res.redirect(authUrl);
 });
 
-router.get('/codeCallbackV2', async(req, res) => {
+router.get('/codeCallbackV2', async (req, res) => {
   if (!stateStore.includes(req.query.state as string)) {
-    console.error('State not recognized')
+    console.error('State not recognized');
     res.sendStatus(500);
     return;
   }
 
   const params = client.callbackParams(req);
   const token: IFrontierBearerToken = await getToken(code_verifier, params);
-  if(process.env.NODE_ENV === 'development'){
+  if (NODE_ENV_isDevelopment) {
     console.log(token);
   }
   // const authInfo = await decodeToken(token);
@@ -122,7 +123,7 @@ async function getToken(code_verifier: string, params: CallbackParamsType): Prom
     code: params.code,
     redirect_uri: CALLBACK_URI_V2,
     grant_type: 'authorization_code'
-  }
+  };
 
   const formDataString = formatAsFormString(data);
 
@@ -130,14 +131,14 @@ async function getToken(code_verifier: string, params: CallbackParamsType): Prom
     'Content-Type': 'application/x-www-form-urlencoded',
     'Accept-Encoding': 'gzip',
     'Content-Length': formDataString.length
-  }
+  };
 
   const options: https.RequestOptions = {
     host: liveOptions.host,
     method: 'POST',
     headers: headers,
     path: '/token'
-  }
+  };
 
   return httpRequestSender<IFrontierBearerToken>(options, formDataString, useHttps);
 }
