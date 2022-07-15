@@ -3,6 +3,7 @@ dotenv.config();
 import {NODE_ENV_isDevelopment, NODE_ENV_isTest } from './web_api/NODE_ENV_isDevelopment';
 import Sqlite from 'better-sqlite3';
 export const db: Sqlite.Database = Sqlite('EDAR.sqlite3');
+db.pragma('journal_mode = WAL');
 
 if (NODE_ENV_isTest) { process.env.API_PORT = '0'; }
 
