@@ -39,7 +39,6 @@ app.use(session(
 app.use(compression()); //TODO check if required when hosting behind nginx
 
 if (refresh_db) {
-  // db.pragma('journal_mode = WAL');
   refreshDatabase(download_source_from_EDDB);
 } else {
   // console.timeEnd('loaded up in');
