@@ -11,14 +11,15 @@ export default class EDARSessionStore extends session.Store {
   private getStatement = db.prepare(`SELECT sid_hash, token_encrypted FROM ${this.table} WHERE sid_hash=?;`);
   private deleteStatement = db.prepare(`DELETE FROM ${this.table} WHERE sid_hash=?;`);
 
-  get(sid: string, callback: (err: unknown, session?: session.SessionData | null | undefined) => void): void {
+  async get(sid: string, callback: (err: unknown, session?: session.SessionData | null | undefined) => void): void {
     let err = null;
     let session = null;
     try {
       const sid_hash = this.sid_hasher(sid);
       const encrypted_session = this.getStatement.get(sid_hash);    
       if(encrypted_session !== undefined) {
-        session = JSON.parse(this.decrypt(encrypted_session.token_encrypted, sid));
+        const decrypted = await this.decrypt(encrypted_session, sid);
+        session = JSON.parse(decrypted);
       }     
 
     }  catch (error) {
@@ -31,21 +32,19 @@ export default class EDARSessionStore extends session.Store {
     }
   }
 
-  set(sid: string, session: session.SessionData, callback?: ((err?: unknown) => void) | undefined): void {
+  async set(sid: string, session: session.SessionData, callback?: ((err?: unknown) => void) | undefined): void {
     let err = null;
     try {
       const sid_hash = this.sid_hasher(sid);
-      const token_encrypted = this.encrypt(JSON.stringify(session), sid);
+      const token_encrypted = await this.encrypt(JSON.stringify(session), sid);
 
       const encrypted_session = this.getStatement.get(sid_hash);    
       if(encrypted_session === undefined) {
-        this.insertStatement.run(sid_hash, token_encrypted);
-        
+        this.insertStatement.run(sid_hash, token_encrypted);    
       }
       else {
         this.updateStatement.run(token_encrypted, sid_hash);
       }
-
     }  catch (error) {
       err = error;
     }
@@ -76,10 +75,10 @@ export default class EDARSessionStore extends session.Store {
     return crypto.createHash('sha256').update(toBeHashed).digest('base64');
   }
 
-  private encrypt(toEncrypt: string, password: string) {
-    const salt = await this.newSalt();
+  private async encrypt(toEncrypt: string, password: string) {
+    const salt = await this.randomBytesAsync();
     const key = await crypto.scrypt(password, salt, 32);
-    const iv = await crypto.randomFill(new Uint8Array(16));
+    const iv = await this.randomBytesAsync();
 
     const cipher = crypto.createCipheriv(this.algorithm, key, iv);
 
@@ -91,15 +90,15 @@ export default class EDARSessionStore extends session.Store {
     return result;
   }
 
-  private newSalt() {
+  private async randomBytesAsync(numBytes = 16) {
     return new Promise(
       (resolve, reject)=>
-        crypto.randomBytes(16, 
+        crypto.randomBytes(numBytes, 
           (bytes)=> 
             resolve(bytes)));
   }
 
-  private decrypt(toDencrypt: string, password: string) {
+  private async decrypt(toDencrypt: string, password: string) {
     const splitString = toDencrypt.split('.');
     if (splitString.length !== 3) {
       throw new Error('Incorrect format of encrypted string');
@@ -108,7 +107,7 @@ export default class EDARSessionStore extends session.Store {
     const cipherText = splitString[0];
     const salt = Buffer.from(splitString[1], 'base64');
     const iv = Buffer.from(splitString[2], 'base64');
-    const key = crypto.scryptSync(password, salt, 32);
+    const key = await crypto.scrypt(password, salt, 32);
 
     const decipher = crypto.createDecipheriv(this.algorithm, key, iv);
 
@@ -117,9 +116,9 @@ export default class EDARSessionStore extends session.Store {
     return decrypted;
   }
 
-  public encryptionTester(testString: string, password: string) {
-    const encrypted = this.encrypt(testString, password);
-    const decrypted = this.decrypt(encrypted, password);
+  public async encryptionTester(testString: string, password: string) {
+    const encrypted = await this.encrypt(testString, password);
+    const decrypted = await this.decrypt(encrypted, password);
     return { ciphertext: encrypted, decrypted: decrypted };
   }
 }
