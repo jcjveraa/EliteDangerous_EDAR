@@ -29,10 +29,19 @@ if (NODE_ENV_isDevelopment) {
   console.info('process.env.COOKIE_SECRET = ' + process.env.COOKIE_SECRET);
 }
 
-let store = undefined;
+let store: EDARSessionStore | undefined = undefined;
 
-if(!NODE_ENV_isTest)
+if(!NODE_ENV_isTest) {
   store = new EDARSessionStore();
+  const sessionMaintenance = (() => {
+    store?.deleteOldSessions();
+    if(NODE_ENV_isDevelopment) console.info('Clearing old sessions...');
+  });
+
+  const clearSessionDelay = 5*60*1000; // every 5 minutes;
+  setInterval(sessionMaintenance, clearSessionDelay);
+  setImmediate(sessionMaintenance);
+}
 
 export const sessionSettings: SessionOptions =
 {
