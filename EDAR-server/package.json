@@ -4,7 +4,7 @@
     "description": "",
     "main": "index.ts",
     "scripts": {
-        "test": "jest --runInBand",
+        "test": "jest --runInBand --detectOpenHandles",
         "build": "tsc --project ./",
         "build-and-run-wo-ts-node": "tsc --project ./ && node .",
         "profile": "tsc --project ./ && node --prof .",
@@ -44,6 +44,7 @@
         "cors": "^2.8.5",
         "csv-parser": "^3.0.0",
         "dotenv": "^10.0.0",
+        "dotenv-expand": "^8.0.3",
         "express": "^4.18.1",
         "express-session": "^1.17.3",
         "flatted": "^3.2.6",

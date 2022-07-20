@@ -1,17 +1,26 @@
 import session from 'express-session';
 import EDARSessionStore from './SessionStore';
-import crypto from 'node:crypto';
 import { server } from '..';
+import { IFrontierBearerToken } from '../models/IFrontierBearerToken';
+import { stopMaintenance } from '../maintenance/Maintenance';
+
+jest.useFakeTimers();
+afterEach(() => stopMaintenance());
 
 test('EdarSessionStore can set and get a session', async () => {
   const store = new EDARSessionStore();
-  const token = 'Im a token!';
+  const token: IFrontierBearerToken = {
+    access_token: 'I\'m a token!',
+    token_type: '',
+    expires_in: 0,
+    refresh_token: ''
+  };
 
   const callback = (err: unknown, sessionData: session.SessionData | null | undefined) => {
     if(err){
       errorCallBack(err);
     }
-    expect(sessionData?.bearerToken).toBe(token);
+    expect(sessionData?.bearerToken.access_token).toBe(token.access_token);
   };
 
   const errorCallBack = ((err: unknown) => {
@@ -29,16 +38,16 @@ test('EdarSessionStore can set and get a session', async () => {
 
 });
 
-test('saltyness', () => {
-  const toCheck = 'toCheck';
-  const salt1 = crypto.randomBytes(64);
-  const salt2 = Buffer.from(salt1.toString('base64'), 'base64');
+// test('saltyness', () => {
+//   const toCheck = 'toCheck';
+//   const salt1 = crypto.randomBytes(64);
+//   const salt2 = Buffer.from(salt1.toString('base64'), 'base64');
 
-  const hash1 = crypto.scryptSync(toCheck, salt1, 64).toString('base64');
-  const hash2 = crypto.scryptSync(toCheck, salt2, 64).toString('base64');
+//   const hash1 = crypto.scryptSync(toCheck, salt1, 64).toString('base64');
+//   const hash2 = crypto.scryptSync(toCheck, salt2, 64).toString('base64');
 
-  expect(hash1).toBe(hash2);
-});
+//   expect(hash1).toBe(hash2);
+// });
 
 
 test('Encrypter', async () => {

@@ -19,5 +19,5 @@
   "javascript.inlayHints.enumMemberValues.enabled": true,
   "javascript.preferences.quoteStyle": "single",
   // "jest.jestCommandLine": "npm run test --",
-  "jest.autoRun": "false"
+  // "jest.autoRun": "false"
 }

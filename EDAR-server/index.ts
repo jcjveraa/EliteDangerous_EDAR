@@ -1,11 +1,16 @@
 import dotenv from 'dotenv';
-dotenv.config();
+import dotenvExpand from 'dotenv-expand';
+const env = dotenv.config();
+dotenvExpand.expand(env);
+
 import {NODE_ENV_isDevelopment, NODE_ENV_isTest } from './web_api/NODE_ENV_isDevelopment';
 import Sqlite from 'better-sqlite3';
 export const db: Sqlite.Database = Sqlite('EDAR.sqlite3');
 db.pragma('journal_mode = WAL');
 
-if (NODE_ENV_isTest) { process.env.API_PORT = '0'; }
+if (NODE_ENV_isTest) {
+  process.env.API_PORT = '0'; 
+}
 
 import express from 'express';
 import compression from 'compression';
@@ -25,7 +30,7 @@ import OAuth from './web_api/OAuth';
 import OAuthTest from './oauth_test/OAuthTest';
 import getPlayerLocation from './web_api/getPlayerLocation';
 import webClient from './web_api/webClient';
-import { sessionSettings } from './web_api/CookieSettings';
+import { sessionSettings } from './stateStore/CookieSettings';
 app.disable('x-powered-by');
 
 const refresh_db = false;

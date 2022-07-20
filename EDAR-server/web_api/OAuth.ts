@@ -21,7 +21,7 @@ const FRONTIER_BASE_URL = 'https://auth.frontierstore.net';
 // const FRONTIER_BASE_URL = 'http://localhost:3001';
 
 const CONFIGV2: IssuerMetadata = {
-  issuer: 'Jelle',
+  issuer: 'EDAR',
   authorization_endpoint: FRONTIER_BASE_URL + '/auth',
   token_endpoint: FRONTIER_BASE_URL + '/token',
 };
@@ -32,7 +32,7 @@ export const httpModuleToUse = useHttps ? https : http;
 
 const testOptions: http.RequestOptions = {
   host: 'localhost',
-  port: 3001,
+  port: process.env.API_PORT,
 };
 
 const liveOptions: https.RequestOptions = {
@@ -94,25 +94,9 @@ router.get('/codeCallbackV2', async (req, res) => {
     console.log(token);
   }
   // const authInfo = await decodeToken(token);
+  req.session.bearerToken = token;
   res.json(token);
 });
-
-// function decodeToken(token: IFrontierBearerToken){
-//   const headers = {
-//     'Accept-Encoding': 'gzip, *',
-//     'Authorization': `Bearer ${token.access_token}`
-//   }
-
-//   const options: https.RequestOptions = {
-//     host: liveOptions.host,
-//     method: 'GET',
-//     headers: headers,
-//     path: '/decode'
-//   }
-
-//   return httpRequestSender(options, undefined, useHttps);
-// }
-
 
 async function getToken(code_verifier: string, params: CallbackParamsType): Promise<IFrontierBearerToken> {
 

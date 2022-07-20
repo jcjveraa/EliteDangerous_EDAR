@@ -1,13 +1,14 @@
 import { SessionOptions, CookieOptions } from 'express-session';
-import {NODE_ENV_isDevelopment, NODE_ENV_isTest} from './NODE_ENV_isDevelopment';
-import EDARSessionStore from '../stateStore/SessionStore';
+import {NODE_ENV_isDevelopment, NODE_ENV_isTest} from '../web_api/NODE_ENV_isDevelopment';
+import EDARSessionStore from './SessionStore';
 
 import 'express-session';
 import { addMaintainer } from '../maintenance/Maintenance';
+import { IFrontierBearerToken } from '../models/IFrontierBearerToken';
 declare module 'express-session' {
   interface SessionData {
     views?: number;
-    bearerToken: string;
+    bearerToken: IFrontierBearerToken;
   }
 }
 
