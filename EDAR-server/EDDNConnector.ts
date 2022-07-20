@@ -11,11 +11,11 @@ const log_file = fs.createWriteStream(__dirname + '/debug.log');
 
 async function processMessage(msg: IEddnCommodity3) {
   const collected_at = calculateUnixEpoch();
-  const station_id = db.prepare('SELECT station_id from station_id_lookup where system_name == ? and station_name == ?')
-    .get(msg.message.systemName, msg.message.stationName);
+  const station_id = db.prepare('SELECT station_id from station_id_lookup where ed_market_id == ?')
+    .get(msg.message.marketId);
 
   if(station_id === undefined) {
-    console.warn('Did not find System:', msg.message.systemName, 'Station:', msg.message.stationName, msg.message.commodities.length);
+    console.warn('Did not find MarketId ', msg.message.marketId, ' which should be in System:', msg.message.systemName, 'Station:', msg.message.stationName, msg.message.commodities.length);
     return;
   }
 
