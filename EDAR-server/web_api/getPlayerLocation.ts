@@ -1,11 +1,14 @@
 import {ICAPIProfile} from '../models/ICAPIProfile';
 import {IFrontierBearerToken} from '../models/IFrontierBearerToken';
 import {httpRequestSender} from './httpRequestSender';
+import { CAPIauthMiddleware } from '../auth/authMiddleware';
 
 import {Router} from 'express';
 
 const router = Router();
 export default router;
+
+router.use(CAPIauthMiddleware);
 
 router.get('/profile', async(req, res) => {
   if(!req.session.useCapi) {

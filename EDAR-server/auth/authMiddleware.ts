@@ -1,32 +1,32 @@
-import { Request, ParamsDictionary, NextFunction } from 'express-serve-static-core';
-import { ParsedQs } from 'qs';
+import { Request, Response, NextFunction } from 'express-serve-static-core';
 import { IFrontierBearerToken } from '../models/IFrontierBearerToken';
 import { refreshToken } from './OAuth';
 
-export const authMiddleware = async (req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, _res: unknown, next: NextFunction) => {
+export const CAPIauthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   if (!req.session.useCapi) {
     console.info('Not using the capi...');
     if (req.session.bearerToken) {
       delete req.session.bearerToken;
     }
-    next();
+    // next();
+    res.status(401).json({error: 'Not using the CAPI'});
     return;
   }
 
   if (!req.session.bearerToken) {
-    resetCapi(req, next);
+    resetCapi(req, res, next);
     return;
   }
 
   let token: IFrontierBearerToken = req.session.bearerToken;
 
   if (!token.access_token) {
-    resetCapi(req, next);
+    resetCapi(req, res, next);
     return;
   }
 
   if (!token.expires_at) {
-    resetCapi(req, next);
+    resetCapi(req, res, next);
     return;
   }
 
@@ -34,7 +34,7 @@ export const authMiddleware = async (req: Request<ParamsDictionary, any, any, Pa
   if (tokenAlmostExpired) {
     const newToken = await refreshToken(token);
     if (newToken === undefined) {
-      resetCapi(req, next);
+      resetCapi(req, res, next);
       return;
     } else {
       token = newToken;
@@ -45,8 +45,7 @@ export const authMiddleware = async (req: Request<ParamsDictionary, any, any, Pa
   next();
 };
 
-function resetCapi(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, next: NextFunction) {
+function resetCapi(req: Request, res:Response, next: NextFunction) {
   req.session.useCapi = false;
-  next();
+  CAPIauthMiddleware(req, res, next);
 }
-

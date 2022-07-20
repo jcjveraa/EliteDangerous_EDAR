@@ -31,19 +31,15 @@ import OAuthTest from './oauth_test/OAuthTest';
 import getPlayerLocation from './web_api/getPlayerLocation';
 import webClient from './web_api/webClient';
 import { sessionSettings } from './stateStore/CookieSettings';
-import { authMiddleware } from './auth/authMiddleware';
 app.disable('x-powered-by');
 
 const refresh_db = false;
 const download_source_from_EDDB = false;
 
-
-
 app.use(session(
   sessionSettings
 ));
 app.use(compression()); //TODO check if required when hosting behind nginx
-app.use(authMiddleware);
 
 if (refresh_db) {
   refreshDatabase(download_source_from_EDDB);
