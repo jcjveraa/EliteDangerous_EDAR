@@ -44,6 +44,7 @@ app.use(compression()); //TODO check if required when hosting behind nginx
 if (refresh_db) {
   refreshDatabase(download_source_from_EDDB);
 } else {
+
   // console.timeEnd('loaded up in');
   // const tradeOpts = new FindTradeOptions('Frigaha', 10, 500000, 50, false);
   // console.time('chain');
@@ -84,5 +85,4 @@ app.get('/api/bySystemName/:systemName', (req, res) => {
 export const server = app.listen(process.env.API_PORT, () => {
   console.log(`EDAR listening on port ${process.env.API_PORT}`);
 });
-
 
