@@ -5,9 +5,9 @@ import https from 'https';
 import http from 'http';
 import zlib from 'node:zlib';
 import { IFrontierBearerToken } from '../models/IFrontierBearerToken';
-import { httpRequestSender } from './httpRequestSender';
+import { httpRequestSender } from '../web_api/httpRequestSender';
 import * as stateStore from '../stateStore/StateStore';
-import {NODE_ENV_isDevelopment} from './NODE_ENV_isDevelopment';
+import {NODE_ENV_isDevelopment} from '../web_api/NODE_ENV_isDevelopment';
 
 
 const router = Router();
@@ -83,6 +83,12 @@ router.get('/requestTokenV2/:state', async (req, res) => {
   res.redirect(authUrl);
 });
 
+router.get('/removeCapi', ((req,res) => {
+  req.session.useCapi = false;
+  req.session.bearerToken = undefined;
+  res.send('CAPI removed');
+}));
+
 router.get('/codeCallbackV2', async (req, res) => {
   const state = req.query.state as string;
   if (!stateStore.includes(state)) {
@@ -92,13 +98,16 @@ router.get('/codeCallbackV2', async (req, res) => {
   }
 
   const params = client.callbackParams(req);
-  const token: IFrontierBearerToken = await getToken(code_verifier, params);
+  let token: IFrontierBearerToken = await getToken(code_verifier, params);
   if (NODE_ENV_isDevelopment) {
     console.log(token);
   }
+
+  token = setExpiresAt(token);
   
   // const authInfo = await decodeToken(token);
   req.session.bearerToken = token;
+  req.session.useCapi = true;
 
   stateStore.deleteState(state);
 
@@ -107,6 +116,31 @@ router.get('/codeCallbackV2', async (req, res) => {
   }
   res.redirect(process.env.BASE_UI_URL);
 });
+
+function setExpiresAt(token: IFrontierBearerToken) {
+  token.expires_at = token.expires_in * 1000 + Date.now();
+  return token;
+}
+
+export async function refreshToken(current_token: IFrontierBearerToken){
+  const data = {
+    client_id: <string>process.env.FRONTIER_CLIENT_ID,
+    grant_type: 'refresh_token',
+    refresh_token: current_token.refresh_token
+  };
+
+  if(NODE_ENV_isDevelopment) console.log('trying to refresh the token...');
+
+  let token = await sendTokenRequest(data);
+  if(token && token.access_token) {
+    token = setExpiresAt(token);
+    if(NODE_ENV_isDevelopment) console.log('Token refresh success');  
+    return token;
+  } else {
+    if(NODE_ENV_isDevelopment) console.log('Token refresh FAIL');
+    return undefined;
+  }
+}
 
 async function getToken(code_verifier: string, params: CallbackParamsType): Promise<IFrontierBearerToken> {
 
@@ -119,6 +153,10 @@ async function getToken(code_verifier: string, params: CallbackParamsType): Prom
     grant_type: 'authorization_code'
   };
 
+  return sendTokenRequest(data);
+}
+
+function sendTokenRequest(data: object) {
   const formDataString = formatAsFormString(data);
 
   const headers = {
@@ -150,7 +188,7 @@ export function modifyOptionsForTesting(options: https.RequestOptions) {
   options.host = testOptions.host;
 }
 
-function formatAsFormString(data: { client_id: string; code_verifier: string; state: string | undefined; code: string | undefined; redirect_uri: string; grant_type: string; }): string {
+function formatAsFormString(data: object): string {
   const urlEncoder = new URLSearchParams;
 
   Object.entries(data).forEach(
