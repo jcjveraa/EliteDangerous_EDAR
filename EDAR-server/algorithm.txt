@@ -1,0 +1,14 @@
+1. find systems in jump range with simple 3d pythagoras formula  - system ids
+2. find stations in systems where we can land (appropriate landing pad size) - system ids, station id's and distance from stars translated to travel time -> STATIONS_IN_RANGE.
+3.1 find listings for all STATIONS_IN_RANGE & join travel time. This means inner join STATIONS_IN_RANGE on LISTINGS on STATION_ID where -> LISTINGS_IN_RANGE
+3.2 find listings for all LISTINGS_IN_RANGE WHERE system_id = current system id && stock > capacity (as we want to buy stuff here) -> LISTINGS_IN_THIS_SYSTEM
+-- optimize $/minute...
+4. Compute price difference 'buy for X' at 'travel time A', 'sell for Y' at 'travel time B', profit/minute = (Y-X) / (A + B)
+4.1 Select LITS.commodity_id, (LIR.sell_price - LITS.buy_price) / (LITS.travel_time + LIR.travel_time)  as profit_per_minute  from LISTINGS_IN_THIS_SYSTEM as LITS join on LISTINGS_IN_RANGE as LIR USING(commodity_id) where LITS.station_id <> LIR.station_id -> RESULT
+
+-- clean up (if required? Can automate using temp tables?)
+drop STATIONS_IN_RANGE
+drop LISTINGS_IN_RANGE
+drop LISTINGS_IN_THIS_SYSTEM
+
+

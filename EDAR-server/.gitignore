@@ -2,4 +2,7 @@ EDAR.sqlite3*
 reference_files/*
 node_modules
 files/*
+!files/items.json.gz
 dist
+.env
+coverage

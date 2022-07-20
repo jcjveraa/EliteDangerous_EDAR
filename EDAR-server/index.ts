@@ -1,32 +1,88 @@
-console.time('loaded up in');
+import dotenv from 'dotenv';
+import dotenvExpand from 'dotenv-expand';
+const env = dotenv.config();
+dotenvExpand.expand(env);
+
+import {NODE_ENV_isDevelopment, NODE_ENV_isTest } from './web_api/NODE_ENV_isDevelopment';
 import Sqlite from 'better-sqlite3';
-import {refreshDatabase} from './database_tools/db_updaters';
-import {FindTradeOptions} from './database_tools/FindTradeOptions';
-import {findTrades, MIN_PAD_SIZE} from './database_tools/trade_finder';
+export const db: Sqlite.Database = Sqlite('EDAR.sqlite3');
+db.pragma('journal_mode = WAL');
+
+if (NODE_ENV_isTest) {
+  process.env.API_PORT = '0'; 
+}
+
+import express from 'express';
+import compression from 'compression';
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import getSystemNames from './web_api/getSystemNames';
+export const app = express();
+import session from 'express-session';
+
+console.time('loaded up in');
+
+import { refreshDatabase } from './database_tools/db_updaters';
+import { FindTradeOptions, systemNameToId } from './database_tools/FindTradeOptions';
+// import {findTrades, MIN_PAD_SIZE} from './database_tools/trade_finder';
+import { findTradeChain } from './database_tools/trade_finder_v2';
+import OAuth from './auth/OAuth';
+import OAuthTest from './oauth_test/OAuthTest';
+import getPlayerLocation from './web_api/getPlayerLocation';
+import webClient from './web_api/webClient';
+import { sessionSettings } from './stateStore/CookieSettings';
+app.disable('x-powered-by');
 
 const refresh_db = false;
+const download_source_from_EDDB = false;
 
-export const db: Sqlite.Database = Sqlite('EDAR.sqlite3');
-// db.pragma('journal_mode = WAL');
+app.use(session(
+  sessionSettings
+));
+app.use(compression()); //TODO check if required when hosting behind nginx
 
 if (refresh_db) {
-  refreshDatabase();
+  refreshDatabase(download_source_from_EDDB);
 } else {
-  console.timeEnd('loaded up in');
-  console.time('Found a two-way trade in');
-  const tradeOpts = new FindTradeOptions('LHS 3447', 10, 100000, 16);
-  tradeOpts.minPadSize = MIN_PAD_SIZE.L;
-  let trade = findTrades(tradeOpts);
 
-  // let returnTrade = undefined;
-  // if(trade) {
-  //   returnTrade = findReturnTrade(trade.buy_station_id, trade.)
-  // }
-  console.log(trade);
-  console.timeEnd('Found a two-way trade in');
-  console.time('Found a trade in');
-  tradeOpts.two_way = false;
-  trade = findTrades(tradeOpts);
-  console.log(trade);
-  console.timeEnd('Found a trade in');
+  // console.timeEnd('loaded up in');
+  // const tradeOpts = new FindTradeOptions('Frigaha', 10, 500000, 50, false);
+  // console.time('chain');
+  // const chainTrade = findTradeChain(3, tradeOpts);
+  // console.log(chainTrade);
+  // console.timeEnd('chain');
 }
+
+if (NODE_ENV_isDevelopment) {
+  console.warn('Cors enabled!');
+  app.use(cors());
+}
+
+
+app.use('/api/SystemNameAutocomplete', getSystemNames);
+app.use('/api/FrontierApi', OAuth);
+
+if (NODE_ENV_isDevelopment) {
+  app.use(bodyParser.urlencoded({ extended: true }));
+  app.use('/', OAuthTest);
+}
+
+app.use('/api/capi', getPlayerLocation);
+app.use('/', webClient);
+
+app.get('/api/bySystemName/:systemName', (req, res) => {
+  let sysId = -1;
+  try {
+    sysId = systemNameToId(req.params.systemName);
+    console.log(sysId);
+    const tradeOpts = new FindTradeOptions(sysId, 10, 500000, 50, false);
+    res.json(findTradeChain(3, tradeOpts)).send();
+  } catch (error) {
+    res.sendStatus(404);
+  }
+});
+
+export const server = app.listen(process.env.API_PORT, () => {
+  console.log(`EDAR listening on port ${process.env.API_PORT}`);
+});
+
