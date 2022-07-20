@@ -7,6 +7,10 @@ CREATE INDEX `ids` ON `listings_v6` (
 	`commodity_id`	ASC
 );
 
+CREATE INDEX `last_updated` ON `listings_v6` (
+	`collected_at`	ASC
+);
+
 CREATE INDEX `system_id` ON `stations_v6` (
 	`system_id`	ASC,
   `distance_to_star` ASC

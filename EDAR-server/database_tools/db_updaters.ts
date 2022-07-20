@@ -1,16 +1,16 @@
-import fs from 'node:fs'
+import fs from 'node:fs';
 import * as readline from 'node:readline';
-import {db} from '..';
+import { db } from '..';
 import {downloadEDDB} from '../downloader/downloader';
 import {ISystemPopulated} from '../models/ISytemPopulated';
 import {ICommodity} from '../models/ICommodity';
 import csv from 'csv-parser';
 import {IListing} from '../models/IListing';
 import {IStation} from '../models/IStation';
-import zlib from 'node:zlib'
+import zlib from 'node:zlib';
 import {calculateUnixEpochDaysAgo, MIN_PAD_SIZE} from './FindTradeOptions';
 
-const BASE_FILE_LOC = 'files/'
+const BASE_FILE_LOC = 'files/';
 const INSERT_BATCH_SIZE = 100000;
 
 const MLP_Mapping = new Map<string, number>();
@@ -19,20 +19,25 @@ MLP_Mapping.set('M', MIN_PAD_SIZE.M);
 MLP_Mapping.set('L', MIN_PAD_SIZE.L);
 
 export async function refreshDatabase(download = false) {
+  const tableCreateProcesses: Promise<void>[] = [];
   if (download) {
-    await downloadEDDB('systems_populated.jsonl').then(() => recreate_systems_populated_v6());
-    await downloadEDDB('listings.csv').then(() => recreate_listings_v6());
-    await downloadEDDB('stations.jsonl').then(() => recreate_stations_v6());
-    await downloadEDDB('commodities.json').then(() => recreate_commodities_v6());
+    tableCreateProcesses.push(downloadEDDB('systems_populated.jsonl').then(() => recreate_systems_populated_v6()));
+    tableCreateProcesses.push(downloadEDDB('listings.csv').then(() => recreate_listings_v6()));
+    tableCreateProcesses.push(downloadEDDB('stations.jsonl').then(() => recreate_stations_v6()));
+    tableCreateProcesses.push(downloadEDDB('commodities.json').then(() => recreate_commodities_v6()));
   } else {
-    await recreate_systems_populated_v6();
-    await recreate_listings_v6();
-    await recreate_stations_v6();
-    await recreate_commodities_v6();
+    tableCreateProcesses.push(recreate_systems_populated_v6());
+    tableCreateProcesses.push(recreate_listings_v6());
+    tableCreateProcesses.push(recreate_stations_v6());
+    tableCreateProcesses.push(recreate_commodities_v6());
   }
 
-  const index_query = fs.readFileSync(__dirname + '/sql/create_indices_and_views.sql', 'utf8');
-  db.exec(index_query);
+  exec_recreate('EDAR_state');
+
+  Promise.all(tableCreateProcesses).then(() => {
+    const index_query = fs.readFileSync(__dirname + '/sql/create_indices_and_views.sql', 'utf8');
+    db.exec(index_query);
+  });
 }
 
 async function recreate_systems_populated_v6() {
@@ -94,7 +99,7 @@ async function recreate_commodities_v6() {
     const full_name = val.name;
 
     db.prepare('UPDATE commodities_v6 set EDDN_name = ? WHERE name = ?').run(key, full_name);
-  })
+  });
 
 
   console.timeEnd('Insert into commodities_v6');

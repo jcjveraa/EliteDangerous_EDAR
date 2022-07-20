@@ -1,9 +1,9 @@
 import zlib from 'zlib';
 import {Subscriber} from 'zeromq';
-import {IEddnCommodity3} from './EDDNSchemas/IEddnCommodity3'
+import {IEddnCommodity3} from './EDDNSchemas/IEddnCommodity3';
 import {IListing} from './models/IListing';
 import {calculateUnixEpoch} from './database_tools/FindTradeOptions';
-import {db} from '.';
+import { db } from '.';
 import fs from 'node:fs';
 
 const SOURCE_URL = 'tcp://eddn.edcd.io:9500';

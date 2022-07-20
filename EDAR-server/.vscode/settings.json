@@ -1,17 +1,23 @@
 {
-    "files.exclude": {
-        "**/node_modules": true,
-        "**/.git": true,
-        "**/.svn": true,
-        "**/.hg": true,
-        "**/CVS": true,
-        "**/.DS_Store": true,
-        "**/Thumbs.db": true
-    },
-    "eslint.alwaysShowStatus": true,
-    "editor.tabSize": 2,
-    "editor.codeActionsOnSave": {
-      "source.fixAll.eslint": true
-    },
-    "files.eol": "\n",
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true
+  },
+  "eslint.alwaysShowStatus": true,
+  "editor.tabSize": 2,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true,
+  },
+  "files.eol": "\n",
+  "eslint.format.enable": true,
+  "javascript.format.semicolons": "insert",
+  "javascript.inlayHints.enumMemberValues.enabled": true,
+  "javascript.preferences.quoteStyle": "single",
+  // "jest.jestCommandLine": "npm run test --",
+  // "jest.autoRun": "false"
 }
