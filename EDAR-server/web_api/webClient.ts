@@ -14,3 +14,9 @@ router.get('/register', (req, res) => {
     res.send('welcome to the session demo. refresh!');
   }
 });
+
+
+router.get('/', (req, res) => {
+  console.log(req.session.bearerToken);
+  res.json(req.session);
+});

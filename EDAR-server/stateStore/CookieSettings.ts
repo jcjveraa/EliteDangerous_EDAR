@@ -23,11 +23,9 @@ if (NODE_ENV_isDevelopment) {
 }
 
 let store: EDARSessionStore | undefined = undefined;
-
-
 if(!NODE_ENV_isTest) {
   store = new EDARSessionStore();
-  addMaintainer(store?.deleteOldSessions);
+  addMaintainer(store.deleteOldSessions.bind(store));
 }
 
 const secureCookieOptions: CookieOptions =

@@ -94,6 +94,7 @@ export default class EDARSessionStore extends session.Store {
       this.deleteExpiredStatement.run(Date.now());
     } catch (error) {
       console.error('Some error occurred when trying to delete old sessions');
+      console.error(error);
     }
   }
 

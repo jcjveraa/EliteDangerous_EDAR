@@ -21,14 +21,15 @@ test('A maintenance function is triggered when directly added', async () => {
 
 
 test('A maintenance function is triggered via the timer', async () => {
-  // jest.useFakeTimers(); // Not working...
+  jest.useFakeTimers(); // Not working...
   // jest.spyOn(global, 'setInterval');// Not working...
   const mock = jest.fn();
   const mock2 = () => 'a';
   addMaintainer(mock);
   addMaintainer(mock2);
 
-  setTimeout(() => expect(mock).toBeCalledTimes(2), 1400);  
+  setTimeout(() => expect(mock).toBeCalledTimes(2), 700);  
+  jest.useRealTimers();
 });
 
 

@@ -21,6 +21,10 @@ export function addMaintainer(fn: { (): void; }) {
   if(functionAlreadyInArray) {
     throw new Error('Function already registered');    
   }
+
+  // if(fn !== undefined) {
+  //   fn();
+  // } // call immediately
   maintainers.push(fn);
 }
 

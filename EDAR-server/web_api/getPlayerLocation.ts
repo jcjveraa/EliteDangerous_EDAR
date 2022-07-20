@@ -10,10 +10,14 @@ export default router;
 
 router.use(bodyParser.json());
 
-router.post('/profile', async(req, res) => {
-  const token: IFrontierBearerToken = req.body;
+router.get('/profile', async(req, res) => {
+  if(!req.session.bearerToken) {
+    res.status(500).json({err: 'no token'});
+    return;
+  }
+  const token: IFrontierBearerToken = req.session.bearerToken;
   if(!token.access_token) {
-    res.sendStatus(400);
+    res.status(400).json({err: 'no access token'});
     return;
   }
 
@@ -23,8 +27,8 @@ router.post('/profile', async(req, res) => {
     name: profile.commander.name,
     credits: profile.commander.credits,
     docked: profile.commander.docked,
-    system: profile.lastSystem,
-    station: profile.lastStarport
+    system_name: profile.lastSystem.name,
+    station_name: profile.lastStarport.name,
   };
 
   res.json(result);

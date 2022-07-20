@@ -38,18 +38,6 @@ test('EdarSessionStore can set and get a session', async () => {
 
 });
 
-// test('saltyness', () => {
-//   const toCheck = 'toCheck';
-//   const salt1 = crypto.randomBytes(64);
-//   const salt2 = Buffer.from(salt1.toString('base64'), 'base64');
-
-//   const hash1 = crypto.scryptSync(toCheck, salt1, 64).toString('base64');
-//   const hash2 = crypto.scryptSync(toCheck, salt2, 64).toString('base64');
-
-//   expect(hash1).toBe(hash2);
-// });
-
-
 test('Encrypter', async () => {
   const test = 'test';
   const store = new EDARSessionStore();

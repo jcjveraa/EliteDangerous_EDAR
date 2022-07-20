@@ -51,7 +51,9 @@ const client = new Client({
   response_types: ['code']
 });
 
-router.get('/requestTokenV2/:state', (req, res) => {
+// http://localhost:3001/api/FrontierApi/requestTokenV2/43838ec2-3df8-42e9-881c-f32c07959193
+
+router.get('/requestTokenV2/:state', async (req, res) => {
   // store the code_verifier in your framework's session mechanism, if it is a cookie based solution
   // it should be httpOnly (not readable by javascript) and encrypted.
 
@@ -65,7 +67,7 @@ router.get('/requestTokenV2/:state', (req, res) => {
     return;
   }
 
-  // stateStore.push(state);
+  await stateStore.push(state);
 
   const SCOPE = 'capi';
 
@@ -82,7 +84,8 @@ router.get('/requestTokenV2/:state', (req, res) => {
 });
 
 router.get('/codeCallbackV2', async (req, res) => {
-  if (!stateStore.includes(req.query.state as string)) {
+  const state = req.query.state as string;
+  if (!stateStore.includes(state)) {
     console.error('State not recognized');
     res.sendStatus(500);
     return;
@@ -93,9 +96,16 @@ router.get('/codeCallbackV2', async (req, res) => {
   if (NODE_ENV_isDevelopment) {
     console.log(token);
   }
+  
   // const authInfo = await decodeToken(token);
   req.session.bearerToken = token;
-  res.json(token);
+
+  stateStore.deleteState(state);
+
+  if(!process.env.BASE_UI_URL) {
+    throw new Error('UI base url not set');
+  }
+  res.redirect(process.env.BASE_UI_URL);
 });
 
 async function getToken(code_verifier: string, params: CallbackParamsType): Promise<IFrontierBearerToken> {

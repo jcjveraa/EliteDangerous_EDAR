@@ -1,5 +1,5 @@
 import { db } from '..';
-import {NODE_ENV_isDevelopment} from '../web_api/NODE_ENV_isDevelopment';
+import { addMaintainer } from '../maintenance/Maintenance';
 
 export async function push(state_uuid: string, attempt = 0): Promise<boolean> {
   if (attempt === 10) {
@@ -17,7 +17,7 @@ export async function push(state_uuid: string, attempt = 0): Promise<boolean> {
 }
 
 export async function includes(state_uuid: string) {
-  const query = db.prepare('SELECT FROM `EDAR_state` WHERE `uuid`=?');
+  const query = db.prepare('SELECT * FROM `EDAR_state` WHERE `uuid`=?');
   const result = query.all(state_uuid);
 
   return result.length === 1;
@@ -31,12 +31,8 @@ export async function updateLastSeen(state_uuid: string) {
   }
 }
 
-export async function numberOfUsers() {
-  const query = db.prepare('SELECT COUNT(`uuid`) FROM `EDAR_state`');
-  const result = query.get();
-  if (NODE_ENV_isDevelopment) {
-    console.log(result);
-  }
+export async function deleteState(state_uuid: string) {
+  db.prepare('DELETE FROM `EDAR_state` where `uuid`=?').run(state_uuid);
 }
 
 async function cleanStateTable() {
@@ -44,3 +40,5 @@ async function cleanStateTable() {
   const cleanupQuery = 'DELETE FROM `EDAR_state` where `last_seen` < ' + ten_minutes_ago_milis;
   db.exec(cleanupQuery);
 }
+
+addMaintainer(cleanStateTable);

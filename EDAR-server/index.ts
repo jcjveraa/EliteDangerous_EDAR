@@ -52,7 +52,6 @@ if (refresh_db) {
   // const chainTrade = findTradeChain(3, tradeOpts);
   // console.log(chainTrade);
   // console.timeEnd('chain');
-
 }
 
 if (NODE_ENV_isDevelopment) {
@@ -70,7 +69,7 @@ if (NODE_ENV_isDevelopment) {
 }
 
 app.use('/api/capi', getPlayerLocation);
-app.use('/api/webclient', webClient);
+app.use('/', webClient);
 
 app.get('/api/bySystemName/:systemName', (req, res) => {
   let sysId = -1;
