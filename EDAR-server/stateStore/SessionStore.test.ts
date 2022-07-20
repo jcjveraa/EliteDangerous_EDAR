@@ -31,8 +31,8 @@ test('EdarSessionStore can set and get a session', async () => {
     }
   });
 
-  await store.set('a', { bearerToken: token, cookie: { originalMaxAge: 14400 } }, errorCallBack);
-  await store.set('a', { bearerToken: token, cookie: { originalMaxAge: 500 } }, errorCallBack);
+  await store.set('a', { bearerToken: token, useCapi: true, cookie: { originalMaxAge: 14400 } }, errorCallBack);
+  await store.set('a', { bearerToken: token, useCapi: true,cookie: { originalMaxAge: 500 } }, errorCallBack);
 
   // store.destroy('a', errorCallBack);
 

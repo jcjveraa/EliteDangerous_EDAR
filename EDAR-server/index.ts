@@ -26,11 +26,12 @@ import { refreshDatabase } from './database_tools/db_updaters';
 import { FindTradeOptions, systemNameToId } from './database_tools/FindTradeOptions';
 // import {findTrades, MIN_PAD_SIZE} from './database_tools/trade_finder';
 import { findTradeChain } from './database_tools/trade_finder_v2';
-import OAuth from './web_api/OAuth';
+import OAuth from './auth/OAuth';
 import OAuthTest from './oauth_test/OAuthTest';
 import getPlayerLocation from './web_api/getPlayerLocation';
 import webClient from './web_api/webClient';
 import { sessionSettings } from './stateStore/CookieSettings';
+import { authMiddleware } from './auth/authMiddleware';
 app.disable('x-powered-by');
 
 const refresh_db = false;
@@ -42,6 +43,7 @@ app.use(session(
   sessionSettings
 ));
 app.use(compression()); //TODO check if required when hosting behind nginx
+app.use(authMiddleware);
 
 if (refresh_db) {
   refreshDatabase(download_source_from_EDDB);
@@ -87,4 +89,4 @@ export const server = app.listen(process.env.API_PORT, () => {
   console.log(`EDAR listening on port ${process.env.API_PORT}`);
 });
 
-// run();
+

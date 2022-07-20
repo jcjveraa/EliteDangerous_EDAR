@@ -3,23 +3,20 @@ import {IFrontierBearerToken} from '../models/IFrontierBearerToken';
 import {httpRequestSender} from './httpRequestSender';
 
 import {Router} from 'express';
-import bodyParser from 'body-parser';
 
 const router = Router();
 export default router;
 
-router.use(bodyParser.json());
-
 router.get('/profile', async(req, res) => {
+  if(!req.session.useCapi) {
+    res.status(500).json({err: 'CAPI not in use for this session.'});
+    return;
+  }
   if(!req.session.bearerToken) {
     res.status(500).json({err: 'no token'});
     return;
   }
   const token: IFrontierBearerToken = req.session.bearerToken;
-  if(!token.access_token) {
-    res.status(400).json({err: 'no access token'});
-    return;
-  }
 
   const profile = await getProfile(token);
 
