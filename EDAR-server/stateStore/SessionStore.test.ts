@@ -17,8 +17,7 @@ test('EdarSessionStore can set and get a session', async () => {
   const errorCallBack = ((err: unknown) => {
     if (err) {
       console.log(err);
-    }
-    else {
+    } else {
       store.get('a', callback);
     }
   });

@@ -1,35 +1,37 @@
 import session from 'express-session';
 import { db } from '..';
 import crypto from 'node:crypto';
+import { NODE_ENV_isDevelopment } from '../web_api/NODE_ENV_isDevelopment';
 
 export default class EDARSessionStore extends session.Store {
   private table = 'sessions';
   private algorithm = 'aes-256-cbc';
-  private insertStatement = db.prepare(`INSERT INTO ${this.table} (sid_hash, token_encrypted, last_seen) VALUES (?, ?, ?);`);
-  private updateStatement = db.prepare(`UPDATE ${this.table} SET token_encrypted=?, last_seen=? WHERE sid_hash=?;`);
-  private getStatement = db.prepare(`SELECT sid_hash, token_encrypted FROM ${this.table} WHERE sid_hash=?;`);
+  private insertStatement = db.prepare(`INSERT INTO ${this.table} (sid_hash, token_encrypted, expires) VALUES (?, ?, ?);`);
+  private touchStatement = db.prepare(`UPDATE ${this.table} SET expires=? WHERE sid_hash=?;`);
+  private updateStatement = db.prepare(`UPDATE ${this.table} SET token_encrypted=?, expires=? WHERE sid_hash=?;`);
+  private getStatement = db.prepare(`SELECT sid_hash, token_encrypted, expires FROM ${this.table} WHERE sid_hash=?;`);
   private deleteStatement = db.prepare(`DELETE FROM ${this.table} WHERE sid_hash=?;`);
-  private deleteBeforeStatement = db.prepare(`DELETE FROM ${this.table} WHERE last_seen<?;`);
-
-  private deleteSessionAfterDays = 14;
+  private deleteExpiredStatement = db.prepare(`DELETE FROM ${this.table} WHERE expires<?;`);
 
   async get(sid: string, callback: (err: unknown, session?: session.SessionData | null | undefined) => void): Promise<void> {
     let err = null;
-    let session = null;
+    let returnedSession: session.SessionData | null = null;
     try {
       const sid_hash = this.sid_hasher(sid);
-      const encrypted_session: {sid_hash: string, token_encrypted: string} = this.getStatement.get(sid_hash);
-      if (encrypted_session !== undefined) {
-        const decrypted = await this.decrypt(encrypted_session.token_encrypted, sid);
-        session = JSON.parse(decrypted);
+      const getResult: { sid_hash: string, token_encrypted: string, expires: number } = this.getStatement.get(sid_hash);
+      if (getResult !== undefined) {
+        const decrypted = await this.decrypt(getResult.token_encrypted, sid);
+        returnedSession = JSON.parse(decrypted);
+        if (returnedSession?.cookie) {
+          returnedSession.cookie.expires = new Date(getResult.expires);
+        }
       }
 
     } catch (error) {
       err = error;
-    }
-    finally {
+    } finally {
       if (callback) {
-        callback(err, session);
+        callback(err, returnedSession);
       }
     }
   }
@@ -37,21 +39,37 @@ export default class EDARSessionStore extends session.Store {
   async set(sid: string, session: session.SessionData, callback?: ((err?: unknown) => void) | undefined): Promise<void> {
     let err = null;
     try {
-      const sid_hash = this.sid_hasher(sid);  
-      const token_encrypted = await this.encrypt(JSON.stringify(session), sid);   
+      const sid_hash = this.sid_hasher(sid);
+      const token_encrypted = await this.encrypt(JSON.stringify(session), sid);
       const encrypted_session = this.getStatement.get(sid_hash);
       if (encrypted_session === undefined) {
-        this.insertStatement.run(sid_hash, token_encrypted, Date.now());
-      }
-      else {
-        this.updateStatement.run(token_encrypted, Date.now(), sid_hash);
+        if (NODE_ENV_isDevelopment) console.log(session.cookie);
+        this.insertStatement.run(sid_hash, token_encrypted, session.cookie.expires?.getTime());
+      } else {
+        this.updateStatement.run(token_encrypted, session.cookie.expires?.getTime(), sid_hash);
       }
     } catch (error) {
       err = error;
-    }
-    finally {
+    } finally {
       if (callback) {
         callback(err);
+      }
+
+    }
+  }
+
+  async touch(sid: string, session: session.SessionData, callback?: (() => void) | undefined): Promise<void> {
+    let err = null;
+    try {
+      const sid_hash = this.sid_hasher(sid);
+      this.touchStatement.run(session.cookie.expires?.getTime(), sid_hash);
+
+    } catch (error) {
+      err = error;
+      console.error('Some error in Touch...', err);
+    } finally {
+      if (callback) {
+        callback();
       }
 
     }
@@ -62,11 +80,9 @@ export default class EDARSessionStore extends session.Store {
     let err = null;
     try {
       this.deleteStatement.run(sid_hash);
-    }
-    catch (error) {
+    } catch (error) {
       err = error;
-    }
-    finally {
+    } finally {
       if (callback) {
         callback(err);
       }
@@ -74,11 +90,8 @@ export default class EDARSessionStore extends session.Store {
   }
 
   public async deleteOldSessions() {
-    try { 
-      const deleteAfterMilisecons = this.deleteSessionAfterDays * 24 * 3600 * 1000;
-      const deleteBefore = Date.now() - deleteAfterMilisecons;
-      this.deleteBeforeStatement.run(deleteBefore);
-    
+    try {
+      this.deleteExpiredStatement.run(Date.now());
     } catch (error) {
       console.error('Some error occurred when trying to delete old sessions');
     }
@@ -100,7 +113,7 @@ export default class EDARSessionStore extends session.Store {
     encrypted += cipher.final('base64');
 
     const result = encrypted + '.' + salt.toString('base64') + '.' + Buffer.from(iv).toString('base64');
-    
+
     return result;
   }
 
@@ -129,7 +142,7 @@ export default class EDARSessionStore extends session.Store {
   }
 
   private async asyncScrypt(password: crypto.BinaryLike, salt: Buffer, keyLen: number) {
-    return new Promise<Buffer>((resolve, reject) => 
+    return new Promise<Buffer>((resolve, reject) =>
       crypto.scrypt(password, salt, keyLen, (err, buf) => this.asyncResolver(err, resolve, buf, reject)));
   }
 
@@ -138,12 +151,11 @@ export default class EDARSessionStore extends session.Store {
       crypto.randomBytes(numBytes, (err, bytes) => this.asyncResolver(err, resolve, bytes, reject)));
   }
 
-  private asyncResolver(err: Error | null, resolve: (value: Buffer | PromiseLike<Buffer>) => void, buf: Buffer, 
+  private asyncResolver(err: Error | null, resolve: (value: Buffer | PromiseLike<Buffer>) => void, buf: Buffer,
     reject: { (reason?: unknown): void; (reason?: unknown): void; (arg0: Error): void; }) {
     if (err === null) {
       resolve(buf);
-    }
-    else {
+    } else {
       console.error(err.name, err.message);
       reject(err);
     }

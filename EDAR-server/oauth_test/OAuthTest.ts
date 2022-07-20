@@ -16,7 +16,7 @@ router.get('/auth', (req, res) => {
   const q = req.query;
   const redirectUri = q.redirect_uri as string;
   const state = q.state as string;
-  res.redirect(redirectUri + '?code=abcdefgs&state=' + state)
+  res.redirect(redirectUri + '?code=abcdefgs&state=' + state);
 });
 
 
@@ -30,5 +30,5 @@ router.post('/token', (req, res) => {
 router.get('/token', (req, res) => {
   console.log('TOKEN type was GET');
   // console.log(req);
-  res.send(req.body)
+  res.send(req.body);
 });

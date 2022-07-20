@@ -3,6 +3,7 @@ import {NODE_ENV_isDevelopment, NODE_ENV_isTest} from './NODE_ENV_isDevelopment'
 import EDARSessionStore from '../stateStore/SessionStore';
 
 import 'express-session';
+import { addMaintainer } from '../maintenance/Maintenance';
 declare module 'express-session' {
   interface SessionData {
     views?: number;
@@ -11,15 +12,6 @@ declare module 'express-session' {
 }
 
 const secureCookie = NODE_ENV_isDevelopment ? false : true;
-
-const secureCookieOptions: CookieOptions =
-{
-  httpOnly: true,
-  secure: secureCookie,
-  signed: true,
-  sameSite: true,
-  maxAge: 14 * 24 * 3600 * 1000 // 14 days
-};
 
 if (!process.env.COOKIE_SECRET) {
   console.error('process.env.COOKIE_SECRET was not set, exiting');
@@ -31,17 +23,20 @@ if (NODE_ENV_isDevelopment) {
 
 let store: EDARSessionStore | undefined = undefined;
 
+
 if(!NODE_ENV_isTest) {
   store = new EDARSessionStore();
-  const sessionMaintenance = (() => {
-    store?.deleteOldSessions();
-    if(NODE_ENV_isDevelopment) console.info('Clearing old sessions...');
-  });
-
-  const clearSessionDelay = 5*60*1000; // every 5 minutes;
-  setInterval(sessionMaintenance, clearSessionDelay);
-  setImmediate(sessionMaintenance);
+  addMaintainer(store?.deleteOldSessions);
 }
+
+const secureCookieOptions: CookieOptions =
+{
+  httpOnly: true,
+  secure: secureCookie,
+  signed: true,
+  sameSite: true,
+  maxAge: 14 * 24 * 3600 * 1000,
+};
 
 export const sessionSettings: SessionOptions =
 {
@@ -50,5 +45,6 @@ export const sessionSettings: SessionOptions =
   proxy: true,
   resave: false,
   saveUninitialized: false,
+  rolling: true,
   store: store
 };

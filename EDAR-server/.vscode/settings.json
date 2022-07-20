@@ -14,4 +14,10 @@
     "source.fixAll.eslint": true,
   },
   "files.eol": "\n",
+  "eslint.format.enable": true,
+  "javascript.format.semicolons": "insert",
+  "javascript.inlayHints.enumMemberValues.enabled": true,
+  "javascript.preferences.quoteStyle": "single",
+  // "jest.jestCommandLine": "npm run test --",
+  "jest.autoRun": "false"
 }
