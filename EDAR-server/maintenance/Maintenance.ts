@@ -1,4 +1,4 @@
-import { NODE_ENV_isTest } from '../web_api/NODE_ENV_isDevelopment';
+import { NODE_ENV_isDevelopment, NODE_ENV_isTest } from '../web_api/NODE_ENV_isDevelopment';
 
 const maintainers: { (): void; }[] = [];
 
@@ -10,7 +10,12 @@ const maintenanceInterval = setInterval(() => {
 }, fiveMinutesInMiliseconds);
 
 function callMaintainers() {
-  maintainers.forEach((func) => func());
+  if(NODE_ENV_isDevelopment) console.log('calling maintenance functions... #' + maintainers.length);
+  maintainers.forEach((func) => {
+    // if(NODE_ENV_isDevelopment) console.log(func.length);
+    // func.call(globalThis);
+    func();
+  });
 }
 
 export const testing_only_callMaintainers = callMaintainers;
@@ -22,10 +27,8 @@ export function addMaintainer(fn: { (): void; }) {
     throw new Error('Function already registered');    
   }
 
-  // if(fn !== undefined) {
-  //   fn();
-  // } // call immediately
   maintainers.push(fn);
+  console.log('Maintainer registered: ', fn.name);
 }
 
 export function removeMaintainer(fn: { (): void; }) {
@@ -38,6 +41,7 @@ export function removeMaintainer(fn: { (): void; }) {
 }
 
 export function stopMaintenance() {
+  console.log('Maintainers stopped');
   maintainers.splice(0, maintainers.length);
   clearInterval(maintenanceInterval);
 }

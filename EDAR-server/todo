@@ -2,3 +2,4 @@
 - Show online status of companion API & my own API
 - add statement on personally identifieable info
 - Use worker threads for the queries https://github.com/WiseLibs/better-sqlite3/blob/4c6a583c940444ed6a05c3b61a9ae6ed88c5f539/docs/threads.md 
+- Cookie secret rotation

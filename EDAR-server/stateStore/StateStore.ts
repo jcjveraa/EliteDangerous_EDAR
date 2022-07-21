@@ -1,5 +1,6 @@
 import { db } from '..';
 import { addMaintainer } from '../maintenance/Maintenance';
+import { NODE_ENV_isTest } from '../web_api/NODE_ENV_isDevelopment';
 
 export async function push(state_uuid: string, attempt = 0): Promise<boolean> {
   if (attempt === 10) {
@@ -38,7 +39,9 @@ export async function deleteState(state_uuid: string) {
 async function cleanStateTable() {
   const ten_minutes_ago_milis = Date.now() - (10 * 60 * 1000);
   const cleanupQuery = 'DELETE FROM `EDAR_state` where `last_seen` < ' + ten_minutes_ago_milis;
-  db.exec(cleanupQuery);
+  if(!NODE_ENV_isTest) {
+    db.exec(cleanupQuery); 
+  }
 }
 
 addMaintainer(cleanStateTable);

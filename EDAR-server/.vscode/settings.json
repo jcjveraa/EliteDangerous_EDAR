@@ -14,7 +14,7 @@
     "source.fixAll.eslint": true,
   },
   "files.eol": "\n",
-  "eslint.format.enable": true,
+  // "eslint.format.enable": true,
   "javascript.format.semicolons": "insert",
   "javascript.inlayHints.enumMemberValues.enabled": true,
   "javascript.preferences.quoteStyle": "single",

@@ -144,8 +144,9 @@ async function recreate_stations_v6() {
   });
 }
 
+export const ageOfListingsToKeep = 21;
 async function recreate_listings_v6() {
-  const ignoreBeforeEpoch = calculateUnixEpochDaysAgo(14);
+  const ignoreBeforeEpoch = calculateUnixEpochDaysAgo(ageOfListingsToKeep);
 
   exec_recreate('listings_v6');
   const listingsFile = BASE_FILE_LOC + 'listings.csv.gz';

@@ -90,6 +90,7 @@ export default class EDARSessionStore extends session.Store {
   }
 
   public async deleteOldSessions() {
+    if(NODE_ENV_isDevelopment) console.log('Deleting old sessions...');
     try {
       this.deleteExpiredStatement.run(Date.now());
     } catch (error) {

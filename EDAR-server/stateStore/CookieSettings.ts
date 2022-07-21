@@ -29,13 +29,14 @@ if(!NODE_ENV_isTest) {
   addMaintainer(store.deleteOldSessions.bind(store));
 }
 
+const maxCookieAgeDays = 24; // to (conservatively) match with 25 days mentioned here https://github.com/Athanasius/fd-api/blob/main/docs/FrontierDevelopments-oAuth2-notes.md
 const secureCookieOptions: CookieOptions =
 {
   httpOnly: true,
   secure: secureCookie,
   signed: true,
   sameSite: true,
-  maxAge: 14 * 24 * 3600 * 1000,
+  maxAge: maxCookieAgeDays * 24 * 3600 * 1000,
 };
 
 export const sessionSettings: SessionOptions =
