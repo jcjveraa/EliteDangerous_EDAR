@@ -1,24 +1,25 @@
 import zlib from 'zlib';
 import {Subscriber} from 'zeromq';
-import {IEddnCommodity3} from './EDDNSchemas/IEddnCommodity3';
+import {IEddnCommodity3} from './IEddnCommodity3';
 
-import { db } from '.';
+import { db } from '..';
 import fs from 'node:fs';
-import { NODE_ENV_isDevelopment } from './web_api/NODE_ENV_isDevelopment';
-import { IEddnJournal1 } from './EDDNSchemas/IEddnJournal1';
-import { IEddnDockedEvent } from './EDDNSchemas/IEddnDockedEvent';
-import { IEddnMessage } from './EDDNSchemas/IEddnMessage';
-import { MIN_PAD_SIZE } from './database_tools/FindTradeOptions';
+import { NODE_ENV_isDevelopment } from '../web_api/NODE_ENV_isDevelopment';
+import { IEddnJournal1 } from './IEddnJournal1';
+import { IEddnDockedEvent } from './IEddnDockedEvent';
+import { IEddnMessage } from './IEddnMessage';
+import { MIN_PAD_SIZE } from '../database_tools/FindTradeOptions';
 
 const SOURCE_URL = 'tcp://eddn.edcd.io:9500';
-const log_file = fs.createWriteStream(__dirname + '/debug.log');
+// const log_file = fs.createWriteStream(__dirname + '/debug.log');
 
 const insertStatement = db.prepare('INSERT OR IGNORE INTO `stations_v6`(`id`, `ed_market_id`, `system_id`, `max_landing_pad_size`, `distance_to_star`, `name`, `is_planetary`) VALUES (?,?,?,?,?,?, ?);');
 const findStatement = db.prepare('select count() from station_id_lookup where station_name=? AND system_name=?');
 
 async function processCommodityMessage(msg: IEddnCommodity3) {
   const message = msg.message;
-  const collected_at = msg.header.gatewayTimestamp;
+  const ts = msg.header.gatewayTimestamp ? msg.header.gatewayTimestamp : Date.now();
+  const collected_at = new Date(ts).getTime();
   const station_id = db.prepare('SELECT station_id from station_id_lookup where ed_market_id == ?')
     .get(message.marketId);
 
@@ -56,8 +57,6 @@ async function processJournalMessage(msg: IEddnJournal1) {
     processDockedEvent(msg);
   }
 }
-
-
 
 function processDockedEvent(msg: unknown) {
   const dockedMessage = msg as IEddnDockedEvent;

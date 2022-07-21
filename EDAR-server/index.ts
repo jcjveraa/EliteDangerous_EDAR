@@ -31,7 +31,7 @@ import OAuthTest from './oauth_test/OAuthTest';
 import getPlayerLocation from './web_api/getPlayerLocation';
 import webClient from './web_api/webClient';
 import { sessionSettings } from './stateStore/CookieSettings';
-import { run } from './EDDNConnector';
+import { run } from './EDDNSchemas/EDDNConnector';
 import { addMaintainer } from './maintenance/Maintenance';
 import { maintainListings } from './database_tools/dbMaintenance';
 app.disable('x-powered-by');
